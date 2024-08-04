@@ -1,0 +1,23 @@
+.theme_toggle {
+    background-color: var(--mantine-color-default-hover);
+    color: var(--text-color);
+    margin: 0.5rem;
+}
+
+.indicator {
+    background-color: var(--mantine-color-default);
+    color: var(--text-color);
+}
+
+.icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.icon_link_group {
+    gap: 10;
+}
+
+.innerLabel {
+    color: var(--text-color);
+}

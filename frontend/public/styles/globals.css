@@ -1,0 +1,50 @@
+:root[data-theme='light'] {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 230, 230, 230;
+  --background-end-rgb: 255, 255, 255;
+  --background-color: #ffffff;
+  --background-color-l1: #e6e6e6;
+  --background-color-l2: #cccccc;
+  --background-color-l3: #b3b3b3;
+  --background-color-l4: #999999;
+  --background-color-l5: #808080;
+  --background-color-l6: #666666;
+  --background-color-l7: #4c4c4c;
+  --background-color-l8: #333333;
+  --background-color-l9: #191919;
+  --background-color-l10: #000000;
+  --text-color: #000000;
+  --border-color: #dcdcdc;
+  --hover-bg-color: #f0f0f0;
+  --hover-text-color: #333333;
+  /* Add other light theme variables here */
+}
+
+:root[data-theme='dark'] {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 10, 10;
+  --background-end-rgb: 0, 0, 0;
+  --background-color: #000000;
+  --background-color-l1: #191919;
+  --background-color-l2: #333333;
+  --background-color-l3: #4c4c4c;
+  --background-color-l4: #666666;
+  --background-color-l5: #808080;
+  --background-color-l6: #999999;
+  --background-color-l7: #b3b3b3;
+  --background-color-l8: #cccccc;
+  --background-color-l9: #e6e6e6;
+  --background-color-l10: #ffffff;
+  --text-color: #ffffff;
+  --border-color: #333333;
+  --hover-bg-color: #444444;
+  --hover-text-color: #dddddd;
+  /* Add other dark theme variables here */
+}
+
+body {
+  color: rgb(var(--text-color));
+  background: linear-gradient(rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb)));
+  transition: background-color 3s ease, color 3s ease;
+}

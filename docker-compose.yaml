@@ -1,0 +1,25 @@
+services:
+  django:
+    build:
+      context: ./backend
+    volumes:
+      - django:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=backend.settings
+    container_name: backend
+
+  nextjs:
+    build:
+      context: ./frontend
+    #volumes:
+    #  - nextjs:/
+    ports:
+      - "3000:3000"
+    container_name: frontend
+
+volumes:
+  django:
+  nextjs:
