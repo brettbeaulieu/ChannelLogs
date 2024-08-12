@@ -1,6 +1,7 @@
 // components/NavbarNested.js
-import { Group, Code, ScrollArea, rem } from '@mantine/core';
-import { IconMessage, IconVideo, IconAdjustments, IconDatabaseCog } from '@tabler/icons-react';
+import { useState } from 'react';
+import { Group, ScrollArea, rem, Button, Burger } from '@mantine/core';
+import { IconMessage, IconVideo, IconAdjustments, IconDatabaseCog, IconMenu } from '@tabler/icons-react';
 import { LinksGroup } from '@/components';
 import { ThemeToggle } from '@/components';
 import { Logo } from '@/components';
@@ -46,6 +47,8 @@ interface NavbarNestedProps {
 }
 
 export function NavbarNested({ initiallyOpenedStates }: NavbarNestedProps) {
+  const [isNavbarOpen, setMobileNavbarOpen] = useState(false);
+
   const data = fixedData.map((item) => ({
     ...item,
     initiallyOpened: initiallyOpenedStates[item.label] || false,
@@ -53,19 +56,44 @@ export function NavbarNested({ initiallyOpenedStates }: NavbarNestedProps) {
 
   const links = data.map((item) => <LinksGroup {...item} key={item.label} />);
 
+  const handleToggle = () => {
+    setMobileNavbarOpen((prev) => !prev);
+  };
+
   return (
-    <nav className={classes.navbar}>
-      <div className={classes.header}>
-        <Group justify="space-between">
-          <Logo style={{ width: rem(120) }} />
-          <Code fw={700}>v0.0.1</Code>
-        </Group>
+    <>
+      {/* Mobile Toggle Button */}
+      <div className={classes.burgerBun}>
+        <Burger opened={isNavbarOpen} className={classes.toggleButton} onClick={handleToggle}/>
       </div>
 
-      <ScrollArea className={classes.links}>
-        <div className={classes.linksInner}>{links}</div>
-      </ScrollArea>
-      <ThemeToggle />
-    </nav>
+      {/* Mobile Navbar */}
+      <nav className={`${classes.navbar} ${isNavbarOpen ? classes.navbarOpen : classes.navbarClosed} ${classes.mobileNavbar}`}>
+        <div className={classes.header}>
+          <Group justify="space-between">
+            <Logo style={{ width: rem(120) }} />
+          </Group>
+        </div>
+
+        <ScrollArea className={classes.links}>
+          <div className={classes.linksInner}>{links}</div>
+          <ThemeToggle />
+        </ScrollArea>
+      </nav>
+
+      {/* Desktop Navbar */}
+      <nav className={classes.desktopNavbar}>
+        <div className={classes.header}>
+          <Group justify="space-between">
+            <Logo style={{ width: rem(120) }} />
+          </Group>
+        </div>
+
+        <ScrollArea className={classes.links}>
+          <div className={classes.linksInner}>{links}</div>
+        </ScrollArea>
+        <ThemeToggle />
+      </nav>
+    </>
   );
 }

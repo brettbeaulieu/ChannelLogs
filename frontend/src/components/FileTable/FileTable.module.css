@@ -11,6 +11,12 @@
   color: var(--mantine-text-color);
 }
 
+.drawer {
+  pointer-events: none;
+  box-shadow: none;
+}
+
+
 .fileHeader {
   text-align: left;
   padding: 1rem;

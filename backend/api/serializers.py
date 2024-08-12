@@ -69,3 +69,6 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "metadata",
         ]
+
+class DateTimeSerializer(serializers.Serializer):
+    date = serializers.DateTimeField()

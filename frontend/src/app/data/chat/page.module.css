@@ -23,9 +23,10 @@
   width: 20%;
   height: 100vmin;
   margin: 0%;
+  z-index: 1000;
 }
 
-.grid {
+.background {
   margin-left: 20%;
   width: 80%;
   height: 100%;

@@ -1,0 +1,40 @@
+.dateRoot {}
+
+.button {
+    background-color: var(--mantine-color-default);
+    color: var(--mantine-color-text);
+    border-radius: 1rem;
+}
+
+.dropdown {
+    border-radius: 1rem;
+    width: auto;
+    height: auto;
+}
+
+.calendarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    max-width: 360px;
+}
+
+.calendarHeaderControl {
+    align-items: center;
+    width: 5rem;
+    justify-content: center;
+    display: flex;
+}
+
+.month {
+    width: 360px;
+}
+
+.calendarHeaderControlIcon {
+
+}
+
+.datePicker {
+
+}

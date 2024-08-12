@@ -1,8 +1,9 @@
 const BASE_URL = 'http://localhost:8000/api';
 
-async function requestData(method, prefix, data = null, jsonFormat = true, ...args) {
-    const urlWithArgs = args.length > 0 ? `${BASE_URL}/${prefix}/${args.join('/')}` : `${BASE_URL}/${prefix}`;
-    console.log(urlWithArgs);
+async function requestData(method, prefix, data = null, jsonFormat = true, params = {}) {
+    // Build query string from params object
+    const queryString = new URLSearchParams(params).toString();
+    const urlWithArgs = queryString ? `${BASE_URL}/${prefix}/?${queryString}` : `${BASE_URL}/${prefix}`;
 
     // Determine the request body and headers
     let body = null;
@@ -17,7 +18,6 @@ async function requestData(method, prefix, data = null, jsonFormat = true, ...ar
             body = data;
         }
     }
-
 
     try {
         // Send request
@@ -45,30 +45,28 @@ async function requestData(method, prefix, data = null, jsonFormat = true, ...ar
     }
 }
 
-
-export async function getData(prefix, ...args) {
-    return requestData('GET', prefix, null, false, ...args);
+// Wrapper functions
+export async function getData(prefix, params = {}) {
+    return requestData('GET', prefix, null, false, params);
 }
 
-export async function deleteData(prefix, ...args) {
-    return requestData('DELETE', prefix, null, false, ...args);
+export async function deleteData(prefix, params = {}) {
+    return requestData('DELETE', prefix, null, false, params);
 }
 
-export async function postData(prefix, data, ...args) {
-    return requestData('POST', prefix, data, false, ...args);
+export async function postData(prefix, data, params = {}) {
+    return requestData('POST', prefix, data, false, params);
 }
 
-export async function putData(prefix, data, ...args) {
-    return requestData('PUT', prefix, data, false, ...args);
+export async function putData(prefix, data, params = {}) {
+    return requestData('PUT', prefix, data, false, params);
 }
 
-export async function patchData(prefix, data, ...args) {
-    return requestData('PATCH', prefix, data, false, ...args);
+export async function patchData(prefix, data, params = {}) {
+    return requestData('PATCH', prefix, data, false, params);
 }
-
 
 export function parseDateTime(datetimeStr) {
-    console.log("datetimeStr: " + datetimeStr);
     return new Date(datetimeStr);
 }
 
@@ -76,7 +74,6 @@ export function formatDateTime(date) {
     // Format the date as YYYY-MM-DD and time as HH:MM:SS
     const formattedDate = date.toLocaleDateString();
     const formattedTime = date.toLocaleTimeString();
-    console.log("Hello " + formattedDate);
 
     return `${formattedDate} ${formattedTime}`;
 }
@@ -84,4 +81,3 @@ export function formatDateTime(date) {
 export function parseFormatDateTime(datetimeStr) {
     return formatDateTime(parseDateTime(datetimeStr));
 }
-

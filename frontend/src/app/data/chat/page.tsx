@@ -20,9 +20,18 @@ export default function Page() {
   }, []);
 
   const fetchFiles = async () => {
-    const response = await getData('chat/files/');
-    console.log(response);
-    setFiles(response.files);
+    try {
+      const response = await getData('chat/files/');
+      
+      // Check if response.files is defined before setting state
+      if (response && response.files) {
+        setFiles(response.files);
+      } else {
+        console.error('Response does not contain files:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching files:', error);
+    }
   };
 
   const handleDrop = async (files: File[]) => {
@@ -37,7 +46,7 @@ export default function Page() {
   };
 
   const handleDelete = async (fileId: string, fileName: string) => {
-    await deleteData(`chat/files/${fileId}`);
+    await deleteData(`chat/files/${fileId}/`);
     await fetchFiles();
   };
 
@@ -82,7 +91,7 @@ export default function Page() {
       <div className={styles.navbar_container}>
         <NavbarNested initiallyOpenedStates={initiallyOpenedStates} />
       </div>
-      <div className={styles.grid}>
+      <div className={styles.background}>
         <Paper className={styles.paper} shadow="xs">
           <Group justify='center'>
             <Text className={styles.centered_header}>
@@ -108,7 +117,7 @@ export default function Page() {
             </Text>
             <Button color="red" onClick={handleDeleteAll}>Delete All</Button>
           </Group>
-          <FileTable files={files} onDelete={handleDelete} onEdit={handleEdit} onPreprocess={handlePreprocess} />
+          <FileTable files={files} onDelete={handleDelete} onEdit={handleEdit} onPreprocess={handlePreprocess} onBulkDelete={() => {}} onBulkPreprocess={() => {}} />
         </Paper>
       </div>
     </main>

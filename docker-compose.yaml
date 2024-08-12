@@ -1,25 +1,35 @@
 services:
   django:
     build:
-      context: ./backend
+      context: ${BACKEND_DIR}
     volumes:
-      - django:/app
+      - ${BACKEND_DIR}:/app
     ports:
       - "8000:8000"
     environment:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=backend.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     container_name: backend
-
+    depends_on:
+      - redis
+  celery:
+    build:
+      context: ${BACKEND_DIR}
+    volumes:
+      - ${BACKEND_DIR}:/app
+    command: celery -A backend worker --loglevel=info
+    container_name: celery
+    depends_on:
+      - redis
+      - django
+  redis:
+    image: redis:latest
+    container_name: redis
   nextjs:
     build:
-      context: ./frontend
-    #volumes:
-    #  - nextjs:/
+      context: ${FRONTEND_DIR}
     ports:
       - "3000:3000"
     container_name: frontend
-
-volumes:
-  django:
-  nextjs:

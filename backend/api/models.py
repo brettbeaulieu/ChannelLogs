@@ -1,12 +1,10 @@
 from django.db import models
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 import os
 
 
 # Create your models here.
 class ChatFile(models.Model):
-    file = models.FileField(upload_to="media/chat")
+    file: models.FileField = models.FileField(upload_to="media/chat")
     filename = models.CharField(max_length=255, blank=True, null=True)
     is_preprocessed = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -35,9 +33,9 @@ class User(models.Model):
 
 class Message(models.Model):
     parent_log = models.ForeignKey(ChatFile, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    message = models.TextField()
-    sentiment_label = models.TextField(max_length=100, default="_None_Found")
+    message = models.TextField(blank=True)
+    sentiment_label = models.TextField(null=True, blank=True)
     sentiment_score = models.FloatField(null=True, blank=True)
     topics = models.JSONField(null=True, blank=True)

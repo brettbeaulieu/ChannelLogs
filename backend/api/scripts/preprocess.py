@@ -1,103 +1,90 @@
-from requests_toolbelt.multipart.encoder import MultipartEncoder
-import json
-import requests
-import time
+import sqlite3
+from pathlib import Path
 
-URL_MSG = "http://localhost:8000/api/chat/messages/"
-URL_USER = "http://localhost:8000/api/chat/users/"
+
+URL_MSG = "http://django:8000/api/chat/messages/"
+DB_MSG = "api_message"
+URL_USER = "http://django:8000/api/chat/users/"
+DB_USER = "api_user"
+
+script_dir = Path(__file__).resolve().parent
+DATABASE = script_dir.parent.parent / "db.sqlite3"
+
 CREATE_PREFIX = "bulk_create/"
+BATCH_SIZE = 4096
 
 
-def extract_info(day: str, line: str) -> tuple:
-    timestamp = f"{day} {line[1:9]}"
-    line = line[11:]
-    if ":" not in line:
+def extract_info(day: str, line: str) -> dict[str, any]:
+    try:
+        timestamp = f"{day} {line[1:9]}"
+        line = line[11:]
+        if ":" not in line:
+            return {}
+        user, message = line.split(":", 1)
+        return {"timestamp": timestamp, "user": user, "message": message.strip()}
+    except Exception as e:
+        print(f"Error extracting info: {e}")
         return {}
-    user, message = line.split(":", 1)
-    return {"timestamp": timestamp, "user": user, "message": message}
 
-def get_user_list(session: requests.Session):
-    user_list = session.get(URL_USER).json()
-    return {user["username"]: user["id"] for user in user_list}
 
-def post_users(session: requests.Session, new_users: list, batch_size: int):
-    for i in range(0, len(new_users), batch_size):
-        # Create a batch
-        batch = new_users[i : i + batch_size]
+def batch_insert_users(conn, users_list, batch_size):
+    cursor = conn.cursor()
+    for i in range(0, len(users_list), batch_size):
+        batch = users_list[i : i + batch_size]
+        cursor.executemany(
+            f"INSERT OR IGNORE INTO {DB_USER} (username) VALUES (?)",
+            [(user,) for user in batch],
+        )
+    conn.commit()
 
-        # Prepare for encoding
-        encoder = MultipartEncoder(fields={"usernames": json.dumps(batch)})
-        try:
-            # Send request
-            response = session.post(
-                URL_USER + CREATE_PREFIX,
-                data=encoder,
-                headers={"Content-Type": encoder.content_type},
-            )
-            # Get the response
-            user_data = response.json()
 
-            # Update user-id list
-            batch_ids = {user["username"]: user["id"] for user in user_data["users"]}
-            return batch_ids
-        except requests.RequestException as e:
-            print(f"Request failed: {e}")
-            raise ConnectionError() from e
-        except KeyError as e:
-            print(f"Unexpected response format: {e}")
-            raise ValueError() from e
+def batch_insert_messages(conn, messages_list, batch_size):
+    cursor = conn.cursor()
+    for i in range(0, len(messages_list), batch_size):
+        batch = messages_list[i : i + batch_size]
+        cursor.executemany(
+            f"INSERT INTO {DB_MSG} (parent_log_id, timestamp, user_id, message) VALUES (?, ?, ?, ?)",
+            batch,
+        )
+    conn.commit()
 
 
 def preprocess_log(parent_id: int, log_path: str):
-    BATCH_SIZE = 8192
+    form_data_list = []
+    new_users = set()
 
-    with requests.Session() as session:
-        # Fetch users that exist in the table already
-        user_ids = get_user_list(session)
+    with open(log_path, mode="r", encoding="UTF-8") as log_file:
+        lines = log_file.readlines()
+        day = lines[0][19:29]
 
-        with open(log_path, mode="r", encoding="UTF-8") as log_file:
-            log_lines = log_file.readlines()
+    for line in lines[1:]:
+        info = extract_info(day, line)
+        if info:
+            form_data_list.append(info)
+            new_users.add(info["user"])
 
-        # Pull date from log start
-        day = log_lines[0][19:29]
+    conn = sqlite3.connect(DATABASE)
 
-        # Process log lines
-        form_data_list = [
-            info for msg in log_lines[1:] if (info := extract_info(day, msg))
-        ]
+    # Batch insert new users and messages
+    batch_insert_users(conn, list(new_users), BATCH_SIZE)
 
-        # ID new users
-        existing_users = set(user_ids.keys())
-        new_users = {
-            user["user"]
-            for user in form_data_list
-            if user["user"] not in existing_users
-        }
+    # Fetch user IDs from the database
+    user_ids = {
+        row[1]: row[0]
+        for row in conn.execute(f"SELECT id, username FROM {DB_USER}").fetchall()
+    }
 
-        _ = post_users(session, list(new_users), BATCH_SIZE)
+    msg_list = [
+        (
+            parent_id,
+            data["timestamp"],
+            user_ids.get(
+                data["user"], None
+            ),  # Handle case where user might not be in the database
+            data["message"],
+        )
+        for data in form_data_list
+    ]
 
-        user_ids = get_user_list(session)
-
-        # Batch HTTP requests
-        msg_list = [
-            {
-                "parent_log": parent_id,
-                "timestamp": data["timestamp"],
-                "user": user_ids[data["user"]],
-                "message": data["message"],
-            }
-            for data in form_data_list
-        ]
-
-        start = time.perf_counter()
-
-        for i in range(0, len(msg_list), BATCH_SIZE):
-            batch = msg_list[i : i + BATCH_SIZE]
-            encoder = MultipartEncoder(fields={"messages": json.dumps(batch)})
-            response = session.post(
-                URL_MSG + CREATE_PREFIX,
-                data=encoder,
-                headers={"Content-Type": encoder.content_type},
-            )
-
-        print(f"Requests took {time.perf_counter()-start:.3g}s")
+    batch_insert_messages(conn, msg_list, BATCH_SIZE)
+    conn.close()

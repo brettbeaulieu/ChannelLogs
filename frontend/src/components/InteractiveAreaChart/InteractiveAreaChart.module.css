@@ -1,0 +1,14 @@
+.root {
+    height: 100%;
+    width: 100%;
+}
+
+.selectSmooth {
+    padding: 1rem;
+}
+
+.chart {
+    height: 400px;
+    width: 100%;
+    padding: 2rem;
+}

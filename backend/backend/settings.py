@@ -10,10 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+CELERY_BROKER_URL = "redis://redis:6379/0"  # or your broker URL
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # or your result backend URL
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 102400
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
@@ -26,7 +30,15 @@ SECRET_KEY = "django-insecure-@&j!(eibl1lhm!8gs#l@vj#wv5%e5ijp9jaxk$d=_tvhypmu$1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "*",
+    "django",
+    "frontend",
+    "celery",
+    "redis",
+    "192.168.1.5",
+    "localhost",
+]
 
 # Application definition
 
@@ -53,6 +65,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
 ROOT_URLCONF = "backend.urls"
 
 TEMPLATES = [
@@ -71,6 +84,45 @@ TEMPLATES = [
     },
 ]
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "level": "DEBUG",  # You can adjust the level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "django.log"),  # Log file location
+            "formatter": "verbose",
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+        "backend": {  # App Logger
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
+}
+
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
@@ -83,7 +135,10 @@ DATABASES = {
         "NAME": "db.sqlite3",
     }
 }
-
+#    "default": {
+#        "ENGINE": "django.db.backends.sqlite3",
+#        "NAME": "db.sqlite3",
+#    }
 #    'default': {
 #        'ENGINE': 'django.db.backends.postgresql',
 #        'NAME': 'backenddb',
@@ -137,14 +192,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://192.168.1.5:3000",
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.MultiPartParser',
-        'rest_framework.parsers.FormParser',
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.MultiPartParser",
+        "rest_framework.parsers.FormParser",
     ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
     ],
 }
