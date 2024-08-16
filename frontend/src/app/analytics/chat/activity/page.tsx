@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { InteractiveAreaChart, NavbarNested, StatsGrid, DateMenu } from "@/components";
+import { InteractiveAreaChart, NavbarNested, DateMenu } from "@/components";
 import { initiallyOpenedStates } from '../opened_states';
-import { Center, Divider, Group, Paper, Select, Loader, Menu, SegmentedControl, Text } from "@mantine/core";
-import { DatePickerInput } from "@mantine/dates";
+import { Center, Divider, Group, Paper, Loader, SegmentedControl } from "@mantine/core";
 import { getData } from "@/api/apiHelpers";
 import { IconMessage, IconUser } from '@tabler/icons-react';
-import { AreaChart, BarChart } from "@mantine/charts";
 import styles from "./page.module.css";
 
 interface StatsGridItem {
@@ -28,25 +26,6 @@ const formatDate = (date: Date | null): string | null => {
   return date.toISOString().split('T')[0];
 };
 
-const fetchStatGridData = async (startDate: string, endDate: string) => {
-  try {
-    const [messages, users] = await Promise.all([
-      getData('chat/messages/message_count', { start_date: startDate, end_date: endDate }),
-      getData('chat/messages/unique_users', { start_date: startDate, end_date: endDate })
-    ]);
-
-    return [
-      { title: 'Total Messages', value: messages.value, diff: 0 },
-      { title: 'Unique Users', value: users.value, diff: 0 },
-    ];
-  } catch (error) {
-    console.error('Error fetching stat grid data:', error);
-    return [];
-  }
-};
-
-
-
 const fetchGraphData = async (granularity: string, startDate: string, endDate: string) => {
   try {
     granularity = granularity.toLowerCase();
@@ -65,7 +44,7 @@ const fetchGraphData = async (granularity: string, startDate: string, endDate: s
       const uniqueUsers = userMap.get(item.date) || 1;
       return {
         date: item.date,
-        ratio: uniqueUsers ? totalMessages / uniqueUsers : 0
+        value: uniqueUsers ? totalMessages / uniqueUsers : 0
       };
     });
 
@@ -77,38 +56,16 @@ const fetchGraphData = async (granularity: string, startDate: string, endDate: s
 };
 
 export default function Page() {
-  const today = new Date('July 30, 2024 00:00:00');
+  const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
   const [granularity, setGranularity] = useState<string | undefined>('Day');
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([yesterday, today]);
-  const [statGridData, setStatGridData] = useState<StatsGridItem[]>([]);
   const [msgGraphData, setMsgGraphData] = useState<GraphItem[]>([]);
   const [userGraphData, setUserGraphData] = useState<GraphItem[]>([]);
   const [ratioGraphData, setRatioGraphData] = useState<GraphItem[]>([]);
-  const [isLoadingStats, setIsLoadingStats] = useState<boolean>(true);
   const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(true);
-
-  useEffect(() => {
-    const updateStatGrid = async () => {
-      setIsLoadingStats(true);
-      const startDate = formatDate(dateRange[0]);
-      const endDate = formatDate(dateRange[1]);
-
-      if (!startDate || !endDate) {
-        console.error('Both start date and end date must be selected.');
-        setIsLoadingStats(false);
-        return;
-      }
-
-      const data = await fetchStatGridData(startDate, endDate);
-      setStatGridData(data);
-      setIsLoadingStats(false);
-    };
-
-    updateStatGrid();
-  }, [dateRange]);
 
   useEffect(() => {
     const updateGraph = async () => {
@@ -140,21 +97,6 @@ export default function Page() {
         <Paper className={styles.mainPaper}>
           {<>
             <Group>
-              <Group className={styles.headerGroup}>
-                <Text size="xl" fw={700}>
-                  Activity Analysis
-                </Text>
-                {isLoadingStats ? (
-                  <Loader variant="dots" />
-                ) : (
-                  <StatsGrid
-                    data={statGridData}
-                    icons={icons}
-                    period={granularity?.toLowerCase()}
-                    isLoading={isLoadingStats}
-                  />
-                )}
-              </Group>
               <Group className={styles.paramsGroup} justify={'right'}>
                 <SegmentedControl
                   value={granularity}
@@ -173,39 +115,36 @@ export default function Page() {
                   <Loader variant="dots" />
                 ) : (
                   <Group>
-                    <Paper shadow="xs" radius="md" className={styles.graphPaper}>
-                      <InteractiveAreaChart
-                        data={ratioGraphData}
-                        series={[{ label: "Messages : Users", name: 'ratio', color: 'indigo.6' }]}
-                        dataKey="date"
-                      />
-
-                    </Paper>
-                    <Paper shadow="xs" radius="md" className={styles.graphPaper}>
-                      <BarChart
-                        className={styles.chart}
-                        series={[{ label: "Messages", name: 'value', color: 'teal.6' }]}
-                        data={msgGraphData}
-                        dataKey="date"
-                        withLegend
-                      />
-                    </Paper>
-                    <Paper shadow="xs" radius="md" className={styles.graphPaper}>
-                      <BarChart
-                        className={styles.chart}
-                        series={[{ label: "Users", name: 'value', color: 'indigo.6' }]}
-                        data={userGraphData}
-                        dataKey="date"
-                        withLegend
-                      />
-                    </Paper>
+                    <InteractiveAreaChart
+                      data={ratioGraphData}
+                      series={[{ label: "Message : User", name: 'value', color: 'indigo.6' }]}
+                      dataKey="date"
+                      granularity={granularity}
+                      title={"Message to User Ratio"}
+                      unit={' Msgs/user'}
+                    />
+                    <InteractiveAreaChart
+                      data={msgGraphData}
+                      series={[{ label: "Messages", name: 'value', color: 'teal.6' }]}
+                      dataKey="date"
+                      granularity={granularity}
+                      title={"Messages"}
+                      unit={' Msgs'}
+                    />
+                    <InteractiveAreaChart
+                      data={userGraphData}
+                      series={[{ label: "Users", name: 'value', color: 'indigo.6' }]}
+                      dataKey="date"
+                      granularity={granularity}
+                      title={"Unique Users"}
+                      unit={' Users'}
+                    />
                   </Group>
                 )}
               </Center>
             </Group>
           </>}
         </Paper>
-
       </div>
     </main >
   );

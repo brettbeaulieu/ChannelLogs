@@ -130,22 +130,18 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'backenddb',
+        'USER': 'maire',
+        'PASSWORD': 'maire',
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
 #    "default": {
 #        "ENGINE": "django.db.backends.sqlite3",
 #        "NAME": "db.sqlite3",
-#    }
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'backenddb',
-#        'USER': 'maire',
-#        'PASSWORD': 'maire',
-#        'HOST': 'localhost',
-#        'PORT': '5432',
 #    }
 
 
@@ -191,6 +187,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [
+    "http://frontend:3000",
     "http://localhost:3000",
     "http://192.168.1.5:3000",
 ]

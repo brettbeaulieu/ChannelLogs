@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 async function requestData(method, prefix, data = null, jsonFormat = true, params = {}) {
     // Build query string from params object

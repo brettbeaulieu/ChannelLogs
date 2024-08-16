@@ -27,7 +27,7 @@ class ChatFile(models.Model):
 
 
 class User(models.Model):
-    username = models.CharField(max_length=64)
+    username = models.CharField(max_length=64, unique=True)
     metadata = models.JSONField(null=True, blank=True)
 
 
@@ -38,4 +38,5 @@ class Message(models.Model):
     message = models.TextField(blank=True)
     sentiment_label = models.TextField(null=True, blank=True)
     sentiment_score = models.FloatField(null=True, blank=True)
-    topics = models.JSONField(null=True, blank=True)
+    toxicity = models.FloatField(null=True, blank=True)
+    topic = models.TextField(null=True, blank=True)

@@ -1,11 +1,14 @@
 celery
+datasets
 django
 djangorestframework
 django-cors-headers
 gunicorn
+numpy==1.25.2
 psycopg2-binary
 pylint
 pylint-django
 requests
 requests-toolbelt
 redis
+transformers

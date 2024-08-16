@@ -10,7 +10,9 @@ WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt /app/
+COPY torch_requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r torch_requirements.txt
 
 # Copy the project files
 COPY . /app/

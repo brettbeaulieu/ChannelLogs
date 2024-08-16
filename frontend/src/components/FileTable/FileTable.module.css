@@ -19,12 +19,12 @@
 
 .fileHeader {
   text-align: left;
-  padding: 1rem;
+  padding: var(--mantine-spacing-md);
 }
 
 .actionHeader {
   text-align: center;
-  padding: 1rem;
+  padding: var(--mantine-spacing-md);
 }
 
 .tbody {
@@ -45,22 +45,22 @@
 
 .fileCell {
   /* Fixed width for the file name column */
-  padding: 1rem;
+  padding: var(--mantine-spacing-md);
   white-space: nowrap;
 }
 
 .propCell {
-  padding: 1rem;
+  padding: var(--mantine-spacing-md);
   text-align: center;
 }
 
 .actionCell {
-  padding: 1rem;
+  padding: var(--mantine-spacing-md);
   text-align: center;
 }
 
 .button {
-  margin-left: 1rem;
+  margin-left: var(--mantine-spacing-md);
   /* Adjust spacing between file name and action buttons */
 }
 
@@ -73,7 +73,7 @@
 .actionGroup {
   background-color: var(--mantine-color-default-hover);
   border-radius: 0.5rem;
-  padding: 0.5rem;
+  padding: var(--mantine-spacing-sm);
 }
 
 .iconCheck {

@@ -7,10 +7,25 @@
   min-height: 100vh;
 }
 
-.navbar {
-  width:20%;
-  height:100vmin;
-  margin:0%;
+.mainPaper {
+  height: fit-content;
+  min-height: 95vmin;
+  margin: 1rem;
+  padding: 1rem;
+  background-color: var(--mantine-color-default);
+  border-radius: 1rem;
+}
+
+.container {
+  max-width: 85%;
+  margin-left: 18rem;
+}
+
+.paramsGroup {
+  width: fit-content;
+  flex-grow: 1;
+  padding: 10px;
+  margin-bottom: 20px;
 }
 
 .grid {
