@@ -210,76 +210,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         granularity = request.query_params.get("granularity", "day")  # Default to 'day'
-
-        # Handle default date values
-        if not start_date_str:
-            start_date_str = "0001-01-01T00:00:00"
-        if not end_date_str:
-            end_date_str = "3001-01-01T00:00:00"
-
-        try:
-            start_date = parse_datetime(start_date_str)
-            end_date = parse_datetime(end_date_str)
-            if not start_date or not end_date:
-                raise ValueError("Invalid date format")
-        except ValueError:
-            return Response(
-                {"error": "Invalid date format. Use YYYY-MM-DD."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Determine the truncation function based on granularity
-        if granularity in GRANULARITY:
-            truncate_func = GRANULARITY[granularity]
-        else:
-            return Response(
-                {"error": f"Invalid granularity. Choose in {GRANULARITY}."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Get sentiment data
-        aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
-            .annotate(period=truncate_func('timestamp'))  # Truncate the date in the query
-            .values('period', 'sentiment_label', 'sentiment_score')
-            .order_by('period')
-        )
-        # Convert to DataFrame for rolling average calculation
-        df = pd.DataFrame(aggregated_data)
-        df['period'] = pd.to_datetime(df['period'])
-
-        # Period-indexed pivot table; labels as columns, scores as values
-        pivot_df = df.pivot_table(
-            index="period", columns="sentiment_label", values="sentiment_score"
-        )
-
-        # Calculate rolling averages for each sentiment label
-        rolling_avg = pivot_df.rolling(
-            window=14, min_periods=1
-        ).mean()  # 7-day window; adjust as needed
-
-        # Round the rolling averages to 4 decimal places
-        rolling_avg = rolling_avg.replace([pd.NA, float('inf'), float('-inf'), np.nan], 0)
-        rolling_avg = rolling_avg.round(2)
-
-
-        # Transform the data to match the desired format
-        formatted_data = []
-        for period, row in rolling_avg.iterrows():
-            formatted_data.append(
-                {
-                    "date": period.date().isoformat(),
-                    **row.to_dict(),  # Add all sentiment labels and their rolling averages
-                }
-            )
-
-        return Response(formatted_data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"])
-    def toxicity_aggregate(self, request):
-        start_date_str = request.query_params.get("start_date")
-        end_date_str = request.query_params.get("end_date")
-        granularity = request.query_params.get("granularity", "day")  # Default to 'day'
+        period = int(request.query_params.get("period", 1))  # Default period if not provided
 
         # Handle default date values
         if not start_date_str:
@@ -312,7 +243,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             Message.objects.filter(timestamp__range=[start_date, end_date])
             .annotate(period=truncate_func("timestamp"))
             .values("period")
-            .annotate(toxic=Avg("toxicity"))
+            .annotate(toxic=Avg("sentiment_score"))
             .order_by("period")
         )
 
@@ -325,4 +256,35 @@ class MessageViewSet(viewsets.ModelViewSet):
             for entry in aggregated_data
         ]
 
-        return Response(formatted_data, status=status.HTTP_200_OK)
+        moving_avg_data = calculate_moving_average(formatted_data, period)
+
+        return Response(moving_avg_data, status=status.HTTP_200_OK)
+
+
+def calculate_moving_average(data, period):
+    """Calculate the moving average of the values."""
+    values = [entry['value'] for entry in data]
+    dates = [entry['date'] for entry in data]
+
+    # Ensure all values are numbers and handle None
+    values = [0 if v is None else v for v in values]  # Replace None with 0 or use another default value
+
+    # Compute the moving average
+    moving_averages = []
+    for i in range(len(values)):
+        start = max(0, i - period + 1)
+        window = values[start:i + 1]
+        if window:
+            moving_avg = np.mean(window)
+        else:
+            moving_avg = 0
+        moving_averages.append(moving_avg)
+
+    # Include the moving averages in the result
+    return [
+        {
+            "date": dates[i],
+            "value": moving_averages[i],
+        }
+        for i in range(len(dates))
+    ]

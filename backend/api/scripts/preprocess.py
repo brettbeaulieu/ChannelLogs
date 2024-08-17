@@ -21,7 +21,7 @@ CREATE_PREFIX = "bulk_create/"
 BATCH_SIZE = 4096 * 4
 
 
-def extract_info(day: str, line: str) -> dict[str, any]:
+def extract_info_chatterino(day: str, line: str) -> dict[str, any]:
     # Define the regex pattern for extracting the timestamp, username, and message
     pattern = re.compile(
         r"^\[(?P<time>\d{2}:\d{2}:\d{2})\] (?P<user>[^:]+): (?P<message>.*)$"
@@ -40,6 +40,32 @@ def extract_info(day: str, line: str) -> dict[str, any]:
         return {}
 
 
+def extract_info(line: str) -> dict[str, any]:
+    # Define the regex pattern for extracting the timestamp, username, and message
+    pattern = re.compile(
+        r"^\[(?P<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] #[^ ]+ (?P<username>[^:]+): (?P<message>.*)$"
+    )
+
+    # Define the regex pattern for identifying links
+    link_pattern = re.compile(r"http[s]?://\S+")
+
+    # Match the line against the pattern
+    match = pattern.match(line)
+
+    if match:
+        timestamp = match.group("datetime")
+        user = match.group("username")
+        message = match.group("message").strip()
+
+        # Replace links in the message with <link>
+        message = link_pattern.sub("<link>", message)
+
+        return {"timestamp": timestamp, "user": user, "message": message}
+    else:
+        # If the line does not match the expected format, return an empty dictionary
+        return {}
+
+
 def batch_insert_users(cursor, users_list, batch_size):
     query = sql.SQL(
         "INSERT INTO {table} (username) VALUES (%s) ON CONFLICT (username) DO NOTHING"
@@ -51,7 +77,7 @@ def batch_insert_users(cursor, users_list, batch_size):
 
 def batch_insert_messages(cursor, messages_list, batch_size):
     query = sql.SQL(
-        "INSERT INTO {table} (parent_log_id, timestamp, user_id, message, toxicity, sentiment_score, sentiment_label) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        "INSERT INTO {table} (parent_log_id, timestamp, user_id, message, sentiment_score) VALUES (%s, %s, %s, %s, %s)"
     ).format(table=sql.Identifier(DB_MSG))
     for i in range(0, len(messages_list), batch_size):
         batch = messages_list[i : i + batch_size]
@@ -65,20 +91,16 @@ def preprocess_log(parent_id: int, log_path: str):
     # Read file and extract info
     with open(log_path, mode="r", encoding="UTF-8") as log_file:
         lines = log_file.readlines()
-        day = lines[0][19:29]
-        for line in lines[1:]:
-            info = extract_info(day, line)
+        for line in lines:
+            info = extract_info(line)
             if info:
                 form_data_list.append(info)
                 new_users.add(info["user"])
 
     # Initialize pipelines for tasks
-    toxic_task = pipeline(
-        "text-classification", model="unitary/toxic-bert", device=0, batch_size=16
-    )
-    emotion_task = pipeline(
-        "text-classification",
-        model="michellejieli/emotion_text_classifier",
+    pipe = pipeline(
+        "zero-shot-classification",
+        model="cross-encoder/nli-distilroberta-base",
         device=0,
         batch_size=16,
     )
@@ -100,17 +122,20 @@ def preprocess_log(parent_id: int, log_path: str):
 
     # Perform classification
     messages = filtered_dataset["message"]
-    toxic_results = toxic_task(messages)
-    emotion_results = emotion_task(messages)
+    emotion_results = pipe(
+        messages, ["positive opinion", "negative opinion", "neutral opinion"]
+    )
 
-    # Map results back to the dataset efficiently
-    toxicity_scores = [result["score"] for result in toxic_results]
-    sentiment_scores = [result["score"] for result in emotion_results]
-    sentiment_labels = [result["label"] for result in emotion_results]
+    translate = {
+        "negative opinion": -1,
+        "neutral opinion": 0,
+        "positive opinion": 1,
+    }
 
-    filtered_dataset = filtered_dataset.add_column("toxicity", toxicity_scores)
-    filtered_dataset = filtered_dataset.add_column("sentiment_score", sentiment_scores)
-    filtered_dataset = filtered_dataset.add_column("sentiment_label", sentiment_labels)
+    # Map results back to the dataset
+    sentiment_score = [translate[result["labels"][0]] for result in emotion_results]
+
+    filtered_dataset = filtered_dataset.add_column("sentiment_score", sentiment_score)
 
     # Build a dictionary for quick lookup
     filtered_data_dict = {item["message"]: item for item in filtered_dataset}
@@ -118,18 +143,10 @@ def preprocess_log(parent_id: int, log_path: str):
     # Update the original list with classification results
     for item in form_data_list:
         if not is_valid_message(item["message"]):
-            item.update(
-                {"toxicity": None, "sentiment_score": None, "sentiment_label": None}
-            )
+            item.update({"sentiment_score": None})
         else:
             filtered_item = filtered_data_dict.get(item["message"], {})
-            item.update(
-                {
-                    "toxicity": filtered_item.get("toxicity"),
-                    "sentiment_score": filtered_item.get("sentiment_score"),
-                    "sentiment_label": filtered_item.get("sentiment_label"),
-                }
-            )
+            item.update({"sentiment_score": filtered_item.get("sentiment_score")})
 
     # Use context management for database connection and cursor
     with psycopg2.connect(**DB_PARAMS) as conn:
@@ -150,13 +167,9 @@ def preprocess_log(parent_id: int, log_path: str):
                 (
                     parent_id,
                     data["timestamp"],
-                    user_ids.get(
-                        data["user"], None
-                    ),  # Handle case where user might not be in the database
+                    user_ids.get(data["user"], None),
                     data["message"],
-                    data["toxicity"],
                     data["sentiment_score"],
-                    data["sentiment_label"],
                 )
                 for data in form_data_list
             ]

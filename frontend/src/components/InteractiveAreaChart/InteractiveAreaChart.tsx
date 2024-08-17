@@ -1,8 +1,8 @@
-import React, { ForwardRefExoticComponent, RefAttributes, useState } from 'react';
-import { ActionIcon, Center, Group, Loader, Menu, Paper, rem, Select, SimpleGrid, Text } from '@mantine/core';
-import { IconArrowUpRight, IconArrowDownRight, IconProps, Icon, IconChartArea, IconSettings, IconChartBar } from '@tabler/icons-react'; // Adjust imports if necessary
+import React, { useState } from 'react';
+import { ActionIcon, Group, Paper, rem, Text } from '@mantine/core';
+import { IconChartArea, IconChartBar } from '@tabler/icons-react';
 import styles from './InteractiveAreaChart.module.css';
-import { AreaChart, AreaChartCurveType, BarChart } from '@mantine/charts';
+import { AreaChart, AreaChartCurveType, AreaChartType, BarChart } from '@mantine/charts';
 
 
 export interface DataStruct {
@@ -37,19 +37,19 @@ const defaultKey: string = 'date';
 const defaultGran: string = 'day';
 const defaultTitle: string = '';
 const defaultUnit: string = '';
-const defaultType: string = 'default';
+const defaultType: AreaChartType = 'default';
 
-export function InteractiveAreaChart({ data = defaultData, series = defaultSeries, dataKey = defaultKey, granularity = defaultGran, title = defaultTitle, unit = defaultUnit, type = defaultType}: ChartProps) {
+export function InteractiveAreaChart({ data = defaultData, series = defaultSeries, dataKey = defaultKey, granularity = defaultGran, title = defaultTitle, unit = defaultUnit, type = defaultType }: ChartProps) {
     const [smoothing, setSmoothing] = useState<AreaChartCurveType | undefined>("linear");
-    const [chartType, setChartType] = useState<string>('area');
+    const [chartType, setChartType] = useState<AreaChartType>("default");
 
-    const handleChartTypeChange = (type: string) => {
+    const handleChartTypeChange = (type: AreaChartType) => {
         setChartType(type);
     };
 
     const handleSmoothingChange = (value: string | null) => {
         if (value) {
-            setSmoothing(value as AreaChartCurveType); // Ensure the value is of type AreaChartCurveType, not string
+            setSmoothing(value as AreaChartCurveType);
         } else {
             setSmoothing(undefined); // Handle the case where value is null
         }
@@ -60,11 +60,11 @@ export function InteractiveAreaChart({ data = defaultData, series = defaultSerie
         console.log(granularity)
         switch (granularity) {
             case 'Minute':
-                return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`;
             case 'Hour':
-                return `${date.getHours().toString().padStart(2, '0')}:00`;
+                return `${date.getUTCHours().toString().padStart(2, '0')}:00`;
             case 'Day':
-                return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
+                return `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}/${date.getUTCDate().toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
             case 'Week':
                 const startOfWeek = new Date(date);
                 startOfWeek.setDate(date.getDate() - date.getDay()); // Set to start of the week
@@ -96,10 +96,10 @@ export function InteractiveAreaChart({ data = defaultData, series = defaultSerie
                                 <Text size="xl" fw={300} fz={'h2'}>{title}</Text>
                             </Group>
                         </Group>
-                        {chartType == 'area' ? (<AreaChart data={data} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
-                            className={styles.chart} curveType={smoothing} withDots={false} withLegend gridAxis='xy' tickLine='xy' unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: formatXAxis }} areaChartProps={{ syncId: 'msgs'}}
-                            />) :
-                            (<BarChart data={data} dataKey={dataKey} series={series} withLegend valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: formatXAxis }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
+                        {chartType == 'default' ? (<AreaChart data={data} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
+                            className={styles.chart} curveType={smoothing} withDots={false} gridAxis='xy' tickLine='xy' unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: formatXAxis }} areaChartProps={{ syncId: 'msgs' }}
+                        />) :
+                            (<BarChart data={data} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: formatXAxis }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
                     </Group>
 
 

@@ -8,15 +8,9 @@
 .mainPaper {
   height: fit-content;
   min-height: 95vmin;
-  margin: 1rem;
-  padding: 1rem;
+  padding: var(--mantine-spacing-md);
   background-color: var(--mantine-color-default);
   border-radius: 1rem;
-}
-
-.container {
-  max-width: 85%;
-  margin-left: 18rem;
 }
 
 .headerGroup {
@@ -24,9 +18,8 @@
 }
 
 .paramsGroup {
-  width: fit-content;
   flex-grow: 1;
-  padding: 10px;
+  padding: var(--mantine-spacing-md);
   margin-bottom: 20px;
 }
 
@@ -47,12 +40,57 @@
 }
 
 .chart {
-  height: 400px;
   width: 100%;
 }
 
 @media (min-width: 769px) {
+  .main {
+    width: 100%;
+  }
+
   .container {
+    width: 83%;
+    margin: var(--mantine-spacing-md);
+    margin-left: 18rem;
+  }
+
+  .paramsGroup {
+    width: 100%;
+    justify-content: right;
+  }
+
+  .chart {
+    height: 400px;
+  }
+
+  .mainPaper {
+    width: 100%;
+    margin: var(--mantine-spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    width: 100%;
+    margin: 0;
+    margin-top: 2rem;
+  }
+
+  .container {
+    width: 100%;
+    margin: 0;
+  }
+
+  .paramsGroup {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .chart {
+    height: 300px;
+  }
+
+  .mainPaper {
     width: 100%;
   }
 }

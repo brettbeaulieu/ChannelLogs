@@ -1,15 +1,15 @@
 from django.db.models.functions import (
-    TruncDate,
-    TruncHour,
     TruncMonth,
     TruncWeek,
+    TruncDay,
+    TruncHour,
     TruncMinute,
 )
 
 GRANULARITY = {
     "minute": TruncMinute,
     "hour": TruncHour,
-    "day": TruncDate,
+    "day": TruncDay,
     "week": TruncWeek,
     "month": TruncMonth,
 }

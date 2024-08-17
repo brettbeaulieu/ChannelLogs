@@ -8,12 +8,6 @@ import { getData } from "@/api/apiHelpers";
 import { IconMessage, IconUser } from '@tabler/icons-react';
 import styles from "./page.module.css";
 
-interface StatsGridItem {
-  title: string;
-  value: any;
-  diff: number;
-}
-
 interface GraphItem {
   date: string;
   value: string;
@@ -28,7 +22,7 @@ const formatDate = (date: Date | null): string | null => {
 
 const fetchGraphData = async (granularity: string, startDate: string, endDate: string) => {
   try {
-    granularity = granularity.toLowerCase();
+
     const [messageData, userData] = await Promise.all([
       getData('chat/messages/message_count_aggregate', { granularity, start_date: startDate, end_date: endDate }),
       getData('chat/messages/unique_users_aggregate', { granularity, start_date: startDate, end_date: endDate })
@@ -70,7 +64,7 @@ export default function Page() {
   useEffect(() => {
     const updateGraph = async () => {
       setIsLoadingGraph(true);
-      const gran = granularity ? granularity.toLowerCase() : 'day';
+      const gran = granularity ? granularity.toLowerCase().replace(/\s+/g, '') : 'day';
       const startDate = formatDate(dateRange[0]);
       const endDate = formatDate(dateRange[1]);
 
@@ -97,7 +91,7 @@ export default function Page() {
         <Paper className={styles.mainPaper}>
           {<>
             <Group>
-              <Group className={styles.paramsGroup} justify={'right'}>
+              <Group className={styles.paramsGroup}>
                 <SegmentedControl
                   value={granularity}
                   onChange={setGranularity}

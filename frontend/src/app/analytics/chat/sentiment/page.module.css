@@ -16,8 +16,15 @@
   border-radius: 1rem;
 }
 
+.chart {
+  height: 700px;
+  width: 100%;
+  padding: 2rem;
+}
+
 .container {
   max-width: 85%;
+  width: 85%;
   margin-left: 18rem;
 }
 

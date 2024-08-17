@@ -36,7 +36,4 @@ class Message(models.Model):
     timestamp = models.DateTimeField(null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField(blank=True)
-    sentiment_label = models.TextField(null=True, blank=True)
     sentiment_score = models.FloatField(null=True, blank=True)
-    toxicity = models.FloatField(null=True, blank=True)
-    topic = models.TextField(null=True, blank=True)

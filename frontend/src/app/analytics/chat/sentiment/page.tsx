@@ -1,11 +1,12 @@
 "use client";
 
 import styles from "./page.module.css";
-import { NavbarNested, InteractiveAreaChart, DateMenu } from "@/components";
+import { NavbarNested, DateMenu } from "@/components";
 import { initiallyOpenedStates } from '../opened_states';
 import { getData } from "@/api/apiHelpers";
 import { Group, Paper, SegmentedControl } from "@mantine/core";
 import { useEffect, useState } from "react";
+import { AreaChart } from "@mantine/charts";
 
 interface GraphItem {
   date: string;
@@ -19,36 +20,32 @@ const formatDate = (date: Date | null): string | null => {
 
 export default function Page() {
 
-  const today = new Date('2024-04-29T00:00:00');
+  const today = new Date();
   const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
+  yesterday.setDate(today.getDate() - 3);
 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([yesterday, today]);
   const [granularity, setGranularity] = useState<string | undefined>('Day');
   const [sentGraphData, setSentimentGraphData] = useState<GraphItem[]>([]);
-  const [toxicGraphData, setToxicGraphData] = useState<GraphItem[]>([]);
   const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(true);
 
 
 
   const fetchGraphData = async (granularity: string, startDate: string, endDate: string) => {
     try {
-      granularity = granularity.toLowerCase();
-      const [sentimentData, toxicityData] = await Promise.all([getData('chat/messages/sentiment_aggregate', { granularity, start_date: startDate, end_date: endDate }),
-      getData('chat/messages/toxicity_aggregate', { granularity, start_date: startDate, end_date: endDate })
-      ])
-
-      return {sentimentData, toxicityData};
+      const sentimentData = await getData('chat/messages/sentiment_aggregate', { granularity, start_date: startDate, end_date: endDate })
+      return sentimentData;
     } catch (error) {
       console.error('Error fetching graph data:', error);
-      return { sentimentData: [], toxicityData: [] };
+      return { sentimentData: [] };
     }
   };
 
   useEffect(() => {
     const updateGraph = async () => {
       setIsLoadingGraph(true);
-      const gran = granularity ? granularity.toLowerCase() : 'day';
+      // convert to lowercase, remove spaces
+      const gran = granularity ? granularity.toLowerCase().replace(/\s+/g, '') : 'day';
       const startDate = formatDate(dateRange[0]);
       const endDate = formatDate(dateRange[1]);
 
@@ -58,17 +55,34 @@ export default function Page() {
         return;
       }
 
-      const {sentimentData, toxicityData} = await fetchGraphData(gran, startDate, endDate);
+      const sentimentData = await fetchGraphData(gran, startDate, endDate);
       setSentimentGraphData(sentimentData);
-      setToxicGraphData(toxicityData);
+      console.log(sentimentData);
       setIsLoadingGraph(false);
     };
 
     updateGraph();
   }, [granularity, dateRange]);
 
-
-
+  const formatXAxis = (tickItem: any) => {
+    const date = new Date(tickItem);
+    switch (granularity) {
+      case '1 Minute':
+        return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+      case '1 Hour':
+        return `${date.getUTCHours().toString().padStart(2, '0')}:00`;
+      case '1 Day':
+        return `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}/${date.getUTCDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
+      case '1 Week':
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getUTCDate() - date.getUTCDay() + 1); // Set to start of the week
+        return `Week of ${startOfWeek.toLocaleDateString()}`;
+      case '1 Month':
+        return `${date.getUTCMonth() + 1}/${date.getUTCFullYear()}`;
+      default:
+        return date.toLocaleDateString();
+    }
+  };
 
   return (
     <main className={styles.main}>
@@ -91,25 +105,17 @@ export default function Page() {
               </Group>
             </>
           }
-          <InteractiveAreaChart
+          <AreaChart
+            h={400}
             data={sentGraphData}
-            type="stacked"
-            series={[{ label: "Anger", name: 'anger', color: 'red.6' },
-            { label: "Disgust", name: 'disgust', color: 'green.6' },
-            { label: "Fear", name: 'fear', color: 'blue.6' },
-            { label: "Joy", name: 'joy', color: 'yellow.6' },
-            { label: "Neutral", name: 'neutral', color: 'gray.6' },
-            { label: "Sadness", name: 'sadness', color: 'blue.6' },
-            { label: "Surprise", name: 'surprise', color: 'orange.6' },
-            ]}
+            type="split"
+            series={[{ label: "Sentiment", name: 'value', color: 'bright' }]}
             dataKey={"date"}
-          />
-          <InteractiveAreaChart
-            data={toxicGraphData}
-            type="stacked"
-            series={[{ label: "Toxicity", name: 'value', color: 'red.6' }
-            ]}
-            dataKey={"date"}
+            withDots={false}
+            yAxisProps={{ domain: [-1, 1] }}
+            xAxisProps={{ dataKey: "date", tickFormatter: formatXAxis }}
+            splitColors={['green', 'red']}
+            withLegend
           />
         </Paper>
       </div>
