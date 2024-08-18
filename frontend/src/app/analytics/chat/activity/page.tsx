@@ -24,8 +24,8 @@ const fetchGraphData = async (granularity: string, startDate: string, endDate: s
   try {
 
     const [messageData, userData] = await Promise.all([
-      getData('chat/messages/message_count_aggregate', { granularity, start_date: startDate, end_date: endDate }),
-      getData('chat/messages/unique_users_aggregate', { granularity, start_date: startDate, end_date: endDate })
+      (await getData('chat/messages/message_count_aggregate', { granularity, start_date: startDate, end_date: endDate })).json(),
+      (await getData('chat/messages/unique_users_aggregate', { granularity, start_date: startDate, end_date: endDate })).json()
     ]);
 
     const userMap = new Map<string, number>(userData.map((item: GraphItem) => [

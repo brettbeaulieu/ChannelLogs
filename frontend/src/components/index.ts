@@ -1,6 +1,7 @@
 "use client";
 
 export { DateMenu } from './DateMenu/DateMenu';
+export { EmoteSetTable } from './EmoteSetTable/EmoteSetTable';
 export { FileTable } from './FileTable/FileTable';
 export { InteractiveAreaChart } from './InteractiveAreaChart/InteractiveAreaChart'
 export { LinksGroup } from './NavbarLinksGroup/NavbarLinksGroup';

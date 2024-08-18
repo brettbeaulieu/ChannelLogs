@@ -1,0 +1,91 @@
+.table {
+  width: 100%;
+  background-color: var(--mantine-color-default);
+  color: var(--mantine-text-color);
+}
+
+/* Headers */
+
+.thead {
+  background-color: var(--mantine-color-default);
+  color: var(--mantine-text-color);
+}
+
+.drawer {
+  pointer-events: none;
+  box-shadow: none;
+}
+
+
+.fileHeader {
+  text-align: left;
+  padding: var(--mantine-spacing-md);
+}
+
+.actionHeader {
+  text-align: center;
+  padding: var(--mantine-spacing-md);
+}
+
+.tbody {
+  background-color: var(--mantine-color-default);
+  color: var(--mantine-text-color);
+}
+
+.tr {
+  background-color: var(--mantine-color-default);
+
+  &:nth-child(even) {
+    background-color: var(--mantine-color-default-light);
+  }
+
+  color: var(--mantine-text-color);
+}
+
+
+.fileCell {
+  /* Fixed width for the file name column */
+  padding: var(--mantine-spacing-md);
+  white-space: nowrap;
+}
+
+.propCell {
+  padding: var(--mantine-spacing-md);
+  text-align: center;
+}
+
+.actionCell {
+  padding: var(--mantine-spacing-md);
+  text-align: center;
+}
+
+.button {
+  margin-left: var(--mantine-spacing-md);
+  /* Adjust spacing between file name and action buttons */
+}
+
+.Group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.actionGroup {
+  background-color: var(--mantine-color-default-hover);
+  border-radius: 0.5rem;
+  padding: var(--mantine-spacing-sm);
+}
+
+.iconCheck {
+  color: var(--mantine-color-green-6);
+  size: 16;
+}
+
+.iconX {
+  color: var(--mantine-color-red-6);
+  size: 16;
+}
+
+.rowSelected {
+  background-color: var(--mantine-color-blue-light);
+}

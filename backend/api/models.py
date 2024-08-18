@@ -4,7 +4,7 @@ import os
 
 # Create your models here.
 class ChatFile(models.Model):
-    file: models.FileField = models.FileField(upload_to="media/chat")
+    file: models.FileField = models.FileField(upload_to="media/chat", unique=True)
     filename = models.CharField(max_length=255, blank=True, null=True)
     is_preprocessed = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -37,3 +37,21 @@ class Message(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField(blank=True)
     sentiment_score = models.FloatField(null=True, blank=True)
+
+class EmoteSet(models.Model):
+    name = models.TextField(blank=False)
+    set_id = models.TextField(blank=False, unique=True)
+    counts = models.JSONField(default=dict, blank=True) # Store occurance counts
+
+    def add_occurrence(self, chat_file_id, emote, count):
+        """Add or update the occurrence count for a given emote in a specific log file."""
+        if chat_file_id not in self.counts:
+            self.counts[chat_file_id] = {}
+        if emote not in self.counts[chat_file_id]:
+            self.counts[chat_file_id][emote] = 0
+        self.counts[chat_file_id][emote] += count
+        self.save()
+
+    def get_occurrences(self, chat_file_id):
+        """Get the occurrence counts for all emotes in a specific log file."""
+        return self.counts.get(chat_file_id, {})

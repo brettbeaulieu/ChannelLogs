@@ -23,12 +23,13 @@ export default function Page() {
   const fetchFiles = async () => {
     try {
       const response = await getData('chat/files/');
+      const data = await response.json();
 
       // Check if response.files is defined before setting state
-      if (response && response.files) {
-        setFiles(response.files);
+      if (data && data.files) {
+        setFiles(data.files);
       } else {
-        console.error('Response does not contain files:', response);
+        console.error('Response does not contain files:', data);
       }
     } catch (error) {
       console.error('Error fetching files:', error);
@@ -40,7 +41,7 @@ export default function Page() {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
 
-    const response = await postData('chat/files/', formData)
+    const response = await postData('chat/files/', formData);
     await fetchFiles();
     setLoading(false);
 

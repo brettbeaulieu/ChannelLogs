@@ -1,5 +1,5 @@
 import styles from "./page.module.css";
-import { LinksGroup, NavbarNested, UserButton, Logo } from "../components";
+import { NavbarNested } from "@/components";
 import { initiallyOpenedStates } from "./opened_states"
 
 export default function Page() {

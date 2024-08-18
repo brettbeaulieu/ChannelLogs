@@ -19,30 +19,15 @@ async function requestData(method, prefix, data = null, jsonFormat = true, param
         }
     }
 
-    try {
-        // Send request
-        const response = await fetch(urlWithArgs, {
-            method: method,
-            headers: headers,
-            body: method === 'GET' ? null : body,
-        });
+    // Send request
+    const response = await fetch(urlWithArgs, {
+        method: method,
+        headers: headers,
+        body: method === 'GET' ? null : body,
+    });
 
-        // Read response
-        const response_msg = method === 'DELETE' ? await response.text() : await response.json();
-
-        // Read error, if response isn't ok
-        if (!response.ok) {
-            throw new Error(`${response.status} ${response_msg["error"]}`);
-        }
-
-        // Return response
-        return response_msg;
-
-    } catch (error) {
-        // Alert to error
-        console.error(`Error ${method} data:`, error);
-        alert(error);
-    }
+    // Return response
+    return response;
 }
 
 // Wrapper functions

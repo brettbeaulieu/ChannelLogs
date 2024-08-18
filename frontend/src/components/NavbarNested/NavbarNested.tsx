@@ -30,6 +30,7 @@ const fixedData = [
     icon: IconDatabaseCog,
     links: [
       { label: 'Chat', link: '/data/chat' },
+      { label: 'Emotes', link: '/data/emotes' },
       { label: 'Stream', link: '/data/stream' },
     ]
   },
@@ -64,7 +65,7 @@ export function NavbarNested({ initiallyOpenedStates }: NavbarNestedProps) {
     <>
       {/* Mobile Toggle Button */}
       <div className={classes.burgerBun}>
-        <Burger opened={isNavbarOpen} className={classes.toggleButton} onClick={handleToggle}/>
+        <Burger opened={isNavbarOpen} className={classes.toggleButton} onClick={handleToggle} />
       </div>
 
       {/* Mobile Navbar */}

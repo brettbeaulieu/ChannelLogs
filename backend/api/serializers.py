@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ChatFile, Message, User
+from .models import ChatFile, Message, User, EmoteSet
 
 
 class ChatFileSerializer(serializers.ModelSerializer):
@@ -70,5 +70,12 @@ class UserSerializer(serializers.ModelSerializer):
             "metadata",
         ]
 
+
 class DateTimeSerializer(serializers.Serializer):
     date = serializers.DateTimeField()
+
+
+class EmoteSetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmoteSet
+        fields = ["id", "name", "set_id", "counts"]
