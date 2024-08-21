@@ -1,9 +1,13 @@
 import cx from 'clsx';
-import { Table, Button, TextInput, Group, Tooltip, Box, Drawer, Menu, Switch, Text, Checkbox } from '@mantine/core';
-import { IconPencil, IconTrash, IconCircleCheck, IconCircleX, IconScanEye, IconSettings } from '@tabler/icons-react';
+import { Table, Button, TextInput, Group, Tooltip, Box, Drawer, Text, Checkbox, Modal } from '@mantine/core';
+import { IconPencil, IconTrash, IconCircleCheck, IconCircleX, IconScanEye } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { parseFormatDateTime } from '@/api/apiHelpers';
 import styles from './FileTable.module.css';
+import { useDisclosure } from '@mantine/hooks';
+import { PreprocessModal } from './components';
+import { VisibilityMenu } from './components';
+
 
 export interface FileData {
   id: string;
@@ -18,12 +22,11 @@ interface FileTableProps {
   files: FileData[];
   onDelete: (fileId: string, fileName: string) => void;
   onEdit: (fileId: string, newFileName: string) => void;
-  onPreprocess: (fileId: string) => void;
   onBulkPreprocess: (fileIds: string[]) => void;
   onBulkDelete: (fileIds: string[]) => void;
 }
 
-export function FileTable({ files, onDelete, onEdit, onPreprocess, onBulkPreprocess, onBulkDelete }: FileTableProps) {
+export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDelete }: FileTableProps) {
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [newFileName, setNewFileName] = useState<string>('');
   const [drawerOpened, setDrawerOpened] = useState(false);
@@ -40,10 +43,12 @@ export function FileTable({ files, onDelete, onEdit, onPreprocess, onBulkPreproc
     setDrawerOpened(selectedFiles.size > 0);
   }, [selectedFiles]);
 
+
   const handleEditClick = (fileId: string, filename: string) => {
     setEditingFileId(fileId);
     setNewFileName(filename);
   };
+
 
   const handleSave = (fileId: string) => {
     if (newFileName && newFileName !== files.find(file => file.id === fileId)?.filename) {
@@ -87,8 +92,10 @@ export function FileTable({ files, onDelete, onEdit, onPreprocess, onBulkPreproc
     setSelectedFiles(new Set());
   };
 
-  const toggleAll = () =>
+  const toggleAll = () => {
     setSelectedFiles(selectedFiles.size == 0 ? new Set(files.map((item) => item.id)) : new Set());
+  };
+
 
   const rows = files.map(file => (
     <Table.Tr key={file.id} className={cx({ [styles.rowSelected]: selectedFiles.has(file.id) })}>
@@ -149,11 +156,7 @@ export function FileTable({ files, onDelete, onEdit, onPreprocess, onBulkPreproc
         <Table.Td className={styles.actionCell}>
           <Box className={styles.actionGroup}>
             {file.is_preprocessed ? null : (
-              <Tooltip label="Preprocess File">
-                <Button color="green" onClick={() => onPreprocess(file.id)} variant="subtle" size="xs">
-                  <IconScanEye size={20} />
-                </Button>
-              </Tooltip>
+                <PreprocessModal parent_ids={new Set<string>([file.id])}/>
             )}
             <Tooltip label="Delete File">
               <Button color="red" onClick={() => onDelete(file.id, file.filename)} variant="subtle" size="xs">
@@ -169,60 +172,7 @@ export function FileTable({ files, onDelete, onEdit, onPreprocess, onBulkPreproc
   return (
     <Box style={{ position: 'relative' }}>
       <Group mb="md">
-        <Menu>
-          <Menu.Target>
-            <Button color="gray" variant="subtle">
-              <IconSettings size={16} />
-            </Button>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Item>
-              <Group>
-                <Switch
-                  checked={visibleColumns.filename}
-                  onChange={(e) => handleColumnVisibilityChange('filename', e.currentTarget.checked)}
-                />
-                <Text>File Name</Text>
-              </Group>
-            </Menu.Item>
-            <Menu.Item>
-              <Group>
-                <Switch
-                  checked={visibleColumns.is_preprocessed}
-                  onChange={(e) => handleColumnVisibilityChange('is_preprocessed', e.currentTarget.checked)}
-                />
-                <Text>Preprocessed</Text>
-              </Group>
-            </Menu.Item>
-            <Menu.Item>
-              <Group>
-                <Switch
-                  checked={visibleColumns.uploaded_at}
-                  onChange={(e) => handleColumnVisibilityChange('uploaded_at', e.currentTarget.checked)}
-                />
-                <Text>Upload Date</Text>
-              </Group>
-            </Menu.Item>
-            <Menu.Item>
-              <Group>
-                <Switch
-                  checked={visibleColumns.metadata}
-                  onChange={(e) => handleColumnVisibilityChange('metadata', e.currentTarget.checked)}
-                />
-                <Text>Metadata</Text>
-              </Group>
-            </Menu.Item>
-            <Menu.Item>
-              <Group>
-                <Switch
-                  checked={visibleColumns.actions}
-                  onChange={(e) => handleColumnVisibilityChange('actions', e.currentTarget.checked)}
-                />
-                <Text>Actions</Text>
-              </Group>
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
+        <VisibilityMenu visibleColumns={visibleColumns} handleVisibilityChange={handleColumnVisibilityChange} />
       </Group>
       <Table className={styles.table}>
         <Table.Thead className={styles.thead}>

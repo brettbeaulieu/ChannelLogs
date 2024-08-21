@@ -1,0 +1,19 @@
+.centered_header {
+    margin: var(--mantine-spacing-md);
+    font-weight: 300;
+    padding-top: var(--mantine-spacing-md);
+    font-size: x-large;
+    text-align: center;
+}
+
+.inner_paper_stack {
+    height: max-content;
+}
+
+.inner_paper {
+    margin: var(--mantine-spacing-md);
+    padding: var(--mantine-spacing-md);
+    height: 30rem;
+    width: 45%;
+    border-radius: var(--mantine-radius-md);
+}

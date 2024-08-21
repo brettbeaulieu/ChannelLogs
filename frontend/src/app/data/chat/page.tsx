@@ -1,20 +1,17 @@
 // pages/page.js
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
-import { Dropzone } from '@mantine/dropzone';
-import { Group, Button, Loader, Text, Paper, TextInput, Stack } from '@mantine/core';
-import { NavbarNested, FileTable } from '@/components';
-import { initiallyOpenedStates } from '../opened_states';
-import styles from './page.module.css';
-import { getData, postData, deleteData, patchData } from '@/api/apiHelpers'
+import { deleteData, getData, patchData, postData } from '@/api/apiHelpers';
+import { FileTable, NavbarNested } from '@/components';
 import { FileData } from '@/components/FileTable/FileTable';
-import { DatePickerInput } from '@mantine/dates';
+import { Button, Group, Paper, Text } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import { initiallyOpenedStates } from '../opened_states';
+import { FileUpload, RustlogImport } from './components';
+import styles from './page.module.css';
 
 export default function Page() {
   const [files, setFiles] = useState<FileData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const openRef = useRef<() => void>(null);
 
   useEffect(() => {
     fetchFiles();
@@ -36,16 +33,7 @@ export default function Page() {
     }
   };
 
-  const handleDrop = async (files: File[]) => {
-    setLoading(true);
-    const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
 
-    const response = await postData('chat/files/', formData);
-    await fetchFiles();
-    setLoading(false);
-
-  };
 
   const handleDelete = async (fileId: string, fileName: string) => {
     await deleteData(`chat/files/${fileId}/`);
@@ -79,53 +67,16 @@ export default function Page() {
     }
   };
 
-  const handlePreprocess = async (fileId: string) => {
-    const formData = new FormData;
-    formData.append('id', fileId);
-    await postData(`chat/files/preprocess/`, formData);
-    await fetchFiles();
-  };
-
   return (
     <main className={styles.main}>
-      <NavbarNested initiallyOpenedStates={initiallyOpenedStates} />
+      <div className={styles.navbar_container}>
+        <NavbarNested initiallyOpenedStates={initiallyOpenedStates} />
+      </div>
       <div className={styles.container}>
         <Paper className={styles.top_paper} shadow="xs">
           <Group justify={'center'}>
-            <Paper className={styles.inner_paper}>
-              <Stack className={styles.inner_paper_stack}>
-                <Text className={styles.centered_header}>
-                  Upload Your Files
-                </Text>
-                <Dropzone
-                  openRef={openRef}
-                  onDrop={handleDrop}
-                  className={styles.file_upload}
-                >
-                  {loading ? <Loader /> : 'Drop files here or click to select'}
-                </Dropzone>
-                <Button style={{ marginBottom: '1rem' }} onClick={() => openRef.current?.()}>Select files</Button>
-              </Stack>
-
-
-            </Paper>
-            <Paper className={styles.inner_paper}>
-              <Stack className={styles.inner_paper_stack}>
-                <Text className={styles.centered_header}>
-                  Import From RustLogs
-                </Text>
-                <TextInput
-                  label={"Channel Name"}
-                />
-                <DatePickerInput
-                  label={"Time Range"}
-                  type={'range'}
-                />
-                <Button>
-                  Submit
-                </Button>
-              </Stack>
-            </Paper>
+            <FileUpload fetchFiles={fetchFiles}/>
+            <RustlogImport />
           </Group>
         </Paper>
 
@@ -136,7 +87,7 @@ export default function Page() {
             </Text>
             <Button color="red" onClick={handleDeleteAll}>Delete All</Button>
           </Group>
-          <FileTable files={files} onDelete={handleDelete} onEdit={handleEdit} onPreprocess={handlePreprocess} onBulkDelete={() => { }} onBulkPreprocess={() => { }} />
+          <FileTable files={files} onDelete={handleDelete} onEdit={handleEdit} onBulkDelete={() => { }} onBulkPreprocess={() => { }} />
         </Paper>
       </div>
     </main>

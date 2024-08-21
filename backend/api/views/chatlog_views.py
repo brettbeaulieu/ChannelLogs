@@ -1,3 +1,4 @@
+import json
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import HttpRequest
@@ -7,7 +8,7 @@ from rest_framework.response import Response
 from ..models import ChatFile
 from ..serializers import ChatFileSerializer
 from ..tasks import preprocess_task
-
+from ..scripts.preprocess import preprocess_log
 class ChatFileViewSet(viewsets.ModelViewSet):
     queryset = ChatFile.objects.all()
     serializer_class = ChatFileSerializer
@@ -71,16 +72,23 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def preprocess(self, request: HttpRequest, *args, **kwargs):
+        #  Request: <QueryDict: {'parent_ids', 'format', 'useEmotes', 'emote-set', 'filter_emotes', 'minWords'}>
         # Obtain id for the row to preprocess
-        row_ids = request.POST.getlist("id")
 
-        if not row_ids:
+        ROW_IDS: list[str] = json.loads(request.POST.get("parent_ids"))
+        FORMAT: str = request.POST.get('format')
+        USE_EMOTES = bool(request.POST.get('useEmotes'))
+        EMOTE_SET = request.POST.get('emote-set')
+        FILTER_EMOTES = bool(request.POST.get('filter_emotes'))
+        MIN_WORDS = int(request.POST.get('minWords'))
+
+        if not ROW_IDS:
             return Response(
                 {"error": "No id(s) provided to preprocess"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        for row in row_ids:
+        for row in ROW_IDS:
             # Check if id exists in the table
             try:
                 obj = ChatFile.objects.get(id=row)
@@ -91,6 +99,6 @@ class ChatFileViewSet(viewsets.ModelViewSet):
                 )
             
             # Dispatch preprocessing task to Celery
-            preprocess_task.delay(row, obj.file.path)
+            preprocess_task.delay(row, obj.file.path, FORMAT, USE_EMOTES, EMOTE_SET, FILTER_EMOTES, MIN_WORDS)
 
         return Response({"message": "Task dispatched!"}, status=status.HTTP_201_CREATED)

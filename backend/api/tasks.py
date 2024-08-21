@@ -4,14 +4,11 @@ from .scripts.preprocess import preprocess_log  # Import your preprocessing func
 
 
 @shared_task
-def preprocess_task(row_id, file_path):
+def preprocess_task(row_id, file_path, format, use_emotes, emote_set, filter_emotes, min_words):
     # Perform preprocessing here
-    preprocess_log(row_id, file_path)
+    preprocess_log(row_id, file_path, format, use_emotes, emote_set, filter_emotes, min_words)
 
     # Update the model
-    try:
-        obj = ChatFile.objects.get(id=row_id)
-        obj.is_preprocessed = True
-        obj.save()
-    except ChatFile.DoesNotExist:
-        pass  # or handle the case where the object does not exist
+    obj = ChatFile.objects.get(id=row_id)
+    obj.is_preprocessed = True
+    obj.save()

@@ -1,8 +1,11 @@
+import json
 import re
 
 import psycopg2
+from collections import defaultdict
 from datasets import Dataset
 from psycopg2 import sql
+import requests
 from transformers import pipeline
 
 # Constants
@@ -10,6 +13,7 @@ URL_MSG = "http://django:8000/api/chat/messages/"
 DB_MSG = "api_message"
 URL_USER = "http://django:8000/api/chat/users/"
 DB_USER = "api_user"
+DB_EMOTE = "api_emoteset"
 DB_PARAMS = {
     "dbname": "backenddb",
     "user": "maire",
@@ -21,7 +25,33 @@ CREATE_PREFIX = "bulk_create/"
 BATCH_SIZE = 4096 * 4
 
 
-def extract_info_chatterino(day: str, line: str) -> dict[str, any]:
+def extract_info_chatterino(path: str) -> tuple[list, set]:
+    form_data_list = []
+    new_users = set()
+    with open(path, mode="r", encoding="UTF-8") as log_file:
+        lines = log_file.readlines()
+        day = lines[0][19:29]
+        for line in lines[1:]:
+            info = read_line_chatterino(day, line)
+            if info:
+                form_data_list.append(info)
+                new_users.add(info["user"])
+    return form_data_list, new_users
+
+
+def extract_info_rustlog(path: str) -> tuple[list, set]:
+    form_data_list = []
+    new_users = set()
+    with open(path, mode="r", encoding="UTF-8") as log_file:
+        for line in log_file:
+            info = read_line_rustlog(line)
+            if info:
+                form_data_list.append(info)
+                new_users.add(info["user"])
+    return form_data_list, new_users
+
+
+def read_line_chatterino(day: str, line: str) -> dict[str, any]:
     # Define the regex pattern for extracting the timestamp, username, and message
     pattern = re.compile(
         r"^\[(?P<time>\d{2}:\d{2}:\d{2})\] (?P<user>[^:]+): (?P<message>.*)$"
@@ -40,7 +70,7 @@ def extract_info_chatterino(day: str, line: str) -> dict[str, any]:
         return {}
 
 
-def extract_info(line: str) -> dict[str, any]:
+def read_line_rustlog(line: str) -> dict[str, any]:
     # Define the regex pattern for extracting the timestamp, username, and message
     pattern = re.compile(
         r"^\[(?P<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] #[^ ]+ (?P<username>[^:]+): (?P<message>.*)$"
@@ -66,6 +96,29 @@ def extract_info(line: str) -> dict[str, any]:
         return {}
 
 
+def get_emote_list(emoteSetName):
+    with psycopg2.connect(**DB_PARAMS) as conn:
+        with conn.cursor() as cursor:
+            query = sql.SQL("SELECT id, set_id FROM {table} WHERE name = %s").format(
+                table=sql.Identifier(DB_EMOTE)
+            )
+            cursor.execute(query, (emoteSetName,))
+
+            # Fetch the result
+            result = cursor.fetchone()
+
+            emoteSetID = result[1]
+
+            if result:
+                response = requests.get(f"http://7tv.io/v3/emote-sets/{emoteSetID}")
+                if response.status_code != 200:
+                    return {}
+                data = response.json()
+                return [x["name"] for x in data["emotes"]]
+            else:
+                return {}
+
+
 def batch_insert_users(cursor, users_list, batch_size):
     query = sql.SQL(
         "INSERT INTO {table} (username) VALUES (%s) ON CONFLICT (username) DO NOTHING"
@@ -84,20 +137,100 @@ def batch_insert_messages(cursor, messages_list, batch_size):
         cursor.executemany(query, batch)
 
 
-def preprocess_log(parent_id: int, log_path: str):
-    form_data_list = []
-    new_users = set()
+def filter_emotes_from_message(message: str, emote_list: list):
+    """Remove emotes from the message and count their occurrences."""
 
-    # Read file and extract info
-    with open(log_path, mode="r", encoding="UTF-8") as log_file:
-        lines = log_file.readlines()
-        for line in lines:
-            info = extract_info(line)
-            if info:
-                form_data_list.append(info)
-                new_users.add(info["user"])
+    emote_counts = defaultdict(int)
+    pattern = re.compile(
+        r"(?<!\w)(?:" + "|".join(re.escape(emote) for emote in emote_list) + r")(?!\w)"
+    )
 
-    # Initialize pipelines for tasks
+    def replace_emote(match):
+        emote = match.group(0)
+        emote_counts[emote] += 1
+        return ""
+
+    cleaned_message = pattern.sub(replace_emote, message)
+    return cleaned_message, dict(emote_counts)
+
+
+def is_valid_message_with_filter(message: str, minWords: int, emoteList: list) -> bool:
+    message, _ = filter_emotes_from_message(message, emoteList)
+    return len(re.findall(r"\w+", message)) >= minWords
+
+
+def count_emotes(dataset, emoteSet):
+    # Count emotes in messages
+    emote_counts = defaultdict(int)
+    for message in dataset["message"]:
+        _, counts = filter_emotes_from_message(message, emoteSet)
+        for emote, count in counts.items():
+            emote_counts[emote] += count
+    return emote_counts
+
+
+def is_valid_message(message: str, minWords: int) -> bool:
+    """Check if the message has a minimum number of words."""
+    return len(re.findall(r"\w+", message)) >= minWords
+
+
+def update_emote_counts(parent_id, emoteSetName, emote_counts_dict):
+    """Update the emote counts for existing messages in the database."""
+    with psycopg2.connect(**DB_PARAMS) as conn:
+        with conn.cursor() as cursor:
+            # Fetch the current counts
+            fetch_query = sql.SQL("SELECT counts FROM {table} WHERE name = %s").format(
+                table=sql.Identifier(DB_EMOTE)
+            )
+
+            cursor.execute(fetch_query, (emoteSetName,))
+            result = cursor.fetchone()
+
+            if result:
+                # Parse the existing counts JSON
+                existing_counts = result[0]
+
+                # Append the new key-value pair
+                existing_counts[parent_id] = emote_counts_dict
+
+                # Convert the updated counts back to JSON
+                updated_counts_json = json.dumps(existing_counts)
+
+                # Update the record with the new counts
+                update_query = sql.SQL(
+                    "UPDATE {table} SET counts = %s WHERE name = %s"
+                ).format(table=sql.Identifier(DB_EMOTE))
+
+                cursor.execute(update_query, (updated_counts_json, emoteSetName))
+
+
+def preprocess_log(
+    parent_id: int,
+    log_path: str,
+    format: str,
+    useEmotes: bool,
+    emoteSetName: str,
+    filterEmotes: bool,
+    minWords: int,
+):
+    # Get emote set
+    emoteList = None
+    if useEmotes:
+        emoteList = get_emote_list(emoteSetName)
+
+    # Get log lines
+    extract_info = extract_info_rustlog
+    if format == "Chatterino":
+        extract_info = extract_info_chatterino
+    form_data_list, new_users = extract_info(log_path)
+
+    message_validator = is_valid_message
+    message_lambda = lambda x: message_validator(x["message"], minWords)
+    if filterEmotes:
+        message_validator = is_valid_message_with_filter
+        message_lambda = lambda x: message_validator(x["message"], minWords, emoteList)
+
+    # Initialize pipeline for zero-shot
     pipe = pipeline(
         "zero-shot-classification",
         model="cross-encoder/nli-distilroberta-base",
@@ -114,14 +247,13 @@ def preprocess_log(parent_id: int, log_path: str):
         }
     )
 
-    # Filter out single-word messages efficiently
-    def is_valid_message(message):
-        return len(re.findall(r"\w+", message)) > 2
-
-    filtered_dataset = dataset.filter(lambda x: is_valid_message(x["message"]))
+    filtered_dataset = dataset.filter(message_lambda)
 
     # Perform classification
-    messages = filtered_dataset["message"]
+    messages = [
+        filter_emotes_from_message(msg, emoteList)[0] if filterEmotes else msg
+        for msg in filtered_dataset["message"]
+    ]
     emotion_results = pipe(
         messages, ["positive opinion", "negative opinion", "neutral opinion"]
     )
@@ -140,26 +272,33 @@ def preprocess_log(parent_id: int, log_path: str):
     # Build a dictionary for quick lookup
     filtered_data_dict = {item["message"]: item for item in filtered_dataset}
 
+    # Count emotes in messages
+    if useEmotes:
+        emote_counts = count_emotes(dataset, emoteList)
+
     # Update the original list with classification results
     for item in form_data_list:
-        if not is_valid_message(item["message"]):
+
+        if not message_lambda(item):
             item.update({"sentiment_score": None})
         else:
             filtered_item = filtered_data_dict.get(item["message"], {})
             item.update({"sentiment_score": filtered_item.get("sentiment_score")})
 
-    # Use context management for database connection and cursor
+    # Patch emote counts, add key to record containing value of the 'emote_counts' data structure
+    update_emote_counts(parent_id, emoteSetName, emote_counts)
+
+    # Batch insert new users + messages
     with psycopg2.connect(**DB_PARAMS) as conn:
         with conn.cursor() as cursor:
-            # Batch insert new users
             batch_insert_users(cursor, list(new_users), BATCH_SIZE)
-
             # Fetch user IDs from the database
             cursor.execute(
-                sql.SQL("SELECT id, username FROM {table}").format(
-                    table=sql.Identifier(DB_USER)
+                sql.SQL("SELECT id, username FROM {title}").format(
+                    title=sql.Identifier(DB_USER)
                 )
             )
+
             user_ids = {row[1]: row[0] for row in cursor.fetchall()}
 
             # Format messages for batch insertion
