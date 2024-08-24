@@ -1,0 +1,33 @@
+.paramsPaper {
+    width: 100%;
+    border-radius: 0;
+    justify-content: center;
+}
+
+.paramsGroup {
+    justify-content: space-evenly;
+    justify-items: space-evenly;
+}
+
+.select,
+.checkbox {
+    display: flex;
+    height: 36px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .paramsGroup {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (min-width: 769px) {
+    .paramsGroup {
+        flex-grow: 1;
+        padding: var(--mantine-spacing-md);
+    }
+}

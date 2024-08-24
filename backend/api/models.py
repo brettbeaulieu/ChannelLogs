@@ -1,5 +1,8 @@
+import json
 from django.db import models
 import os
+
+from django.forms import ValidationError
 
 
 # Create your models here.
@@ -42,6 +45,30 @@ class EmoteSet(models.Model):
     name = models.TextField(blank=False)
     set_id = models.TextField(blank=False, unique=True)
     counts = models.JSONField(default=dict, blank=True) # Store occurance counts
+
+    def clean(self):
+        """Remove invalid ChatFile ID entries from counts."""
+        # Retrieve all existing ChatFile IDs
+        valid_chat_file_ids = set(ChatFile.objects.values_list('id', flat=True))
+
+        try:
+            # Load counts as a dictionary
+            counts_dict = json.loads(json.dumps(self.counts))
+        except (TypeError, ValueError):
+            raise ValidationError("Counts field must be a valid JSON object.")
+
+        # Remove entries with invalid ChatFile IDs
+        for chat_file_id in list(counts_dict.keys()):
+            if chat_file_id not in valid_chat_file_ids:
+                del counts_dict[chat_file_id]
+
+        # Update the counts field with the cleaned data
+        self.counts = counts_dict
+
+    def save(self, *args, **kwargs):
+        # Clean the model instance to ensure all constraints are met
+        self.clean()
+        super().save(*args, **kwargs)
 
     def add_occurrence(self, chat_file_id, emote, count):
         """Add or update the occurrence count for a given emote in a specific log file."""

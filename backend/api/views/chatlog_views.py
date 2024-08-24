@@ -72,14 +72,16 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def preprocess(self, request: HttpRequest, *args, **kwargs):
-        #  Request: <QueryDict: {'parent_ids', 'format', 'useEmotes', 'emote-set', 'filter_emotes', 'minWords'}>
+        #  Request: <QueryDict: {'parentIds', 'format', 'useEmotes', 'emoteSet', 'filterEmotes', 'minWords'}>
         # Obtain id for the row to preprocess
 
-        ROW_IDS: list[str] = json.loads(request.POST.get("parent_ids"))
+        ROW_IDS: list[str] = json.loads(request.POST.get("parentIds"))
         FORMAT: str = request.POST.get('format')
-        USE_EMOTES = bool(request.POST.get('useEmotes'))
-        EMOTE_SET = request.POST.get('emote-set')
-        FILTER_EMOTES = bool(request.POST.get('filter_emotes'))
+        USE_SENTIMENT = json.loads(request.POST.get('useSentiment').lower())
+        print(f'Use-sentiment: {USE_SENTIMENT}')
+        USE_EMOTES = json.loads(request.POST.get('useEmotes').lower())
+        EMOTE_SET = request.POST.get('emoteSet')
+        FILTER_EMOTES = json.loads(request.POST.get('filterEmotes').lower())
         MIN_WORDS = int(request.POST.get('minWords'))
 
         if not ROW_IDS:
@@ -99,6 +101,7 @@ class ChatFileViewSet(viewsets.ModelViewSet):
                 )
             
             # Dispatch preprocessing task to Celery
-            preprocess_task.delay(row, obj.file.path, FORMAT, USE_EMOTES, EMOTE_SET, FILTER_EMOTES, MIN_WORDS)
+            print(f'Filter_emotes: {FILTER_EMOTES}')
+            preprocess_task.delay(row, obj.file.path, FORMAT, USE_SENTIMENT, USE_EMOTES, EMOTE_SET, FILTER_EMOTES, MIN_WORDS)
 
         return Response({"message": "Task dispatched!"}, status=status.HTTP_201_CREATED)

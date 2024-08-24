@@ -7,23 +7,23 @@
 .top_paper {
   width: 100%;
   background-color: var(--mantine-color-default);
-  margin: var(--mantine-spacing-md);
-  border-radius: var(--mantine-radius-lg);
+  border-radius: 0;
 }
 
 .container {
-  max-width: 85%;
-  width: 83%;
-  margin: var(--mantine-spacing-md);
-  margin-left: 18rem;
+  width: 100%;
 }
 
 .inner_paper {
   margin: var(--mantine-spacing-md);
   padding: var(--mantine-spacing-md);
-  height: 30rem;
-  width: 45%;
+  height: 100%;
+  width: 25%;
   border-radius: var(--mantine-radius-lg);
+}
+
+.inner_paper_stack {
+  justify-content: center;
 }
 
 .centered_header {
@@ -47,10 +47,6 @@
   width: 80%;
   height: 100%;
   margin-right: 2rem;
-}
-
-.inner_paper_stack {
-  height: max-content;
 }
 
 .file_upload {

@@ -156,7 +156,7 @@ export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDel
         <Table.Td className={styles.actionCell}>
           <Box className={styles.actionGroup}>
             {file.is_preprocessed ? null : (
-                <PreprocessModal parent_ids={new Set<string>([file.id])}/>
+              <PreprocessModal parent_ids={new Set<string>([file.id])} />
             )}
             <Tooltip label="Delete File">
               <Button color="red" onClick={() => onDelete(file.id, file.filename)} variant="subtle" size="xs">

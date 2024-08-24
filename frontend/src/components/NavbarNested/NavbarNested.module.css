@@ -1,13 +1,9 @@
 /* Base styles for the navbar */
 .navbar,
 .desktopNavbar {
-  z-index: 1000;
   display: flex;
   flex-direction: column;
   background-color: var(--mantine-color-default);
-  position: fixed;
-  top: 0;
-  transition: transform 0.3s ease;
 }
 
 /* Common styles for header, links, and footer */
@@ -25,78 +21,12 @@
   margin: 0 calc(var(--mantine-spacing-md) * -1);
 }
 
-/* Mobile navbar styles */
-.mobileNavbar {
-  transform: translateY(-100%);
-  left: 0;
-  position: fixed;
+.desktopNavbar {
   width: 100%;
-  height: 75%;
-  border-bottom: 1rem;
-}
-
-.navbarOpen {
-  transform: translateY(0);
-}
-
-.navbarClosed {
-  transform: translateY(-100%);
-}
-
-/* Toggle button styles */
-.toggleButton {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .desktopNavbar {
-    display: none;
-  }
-  .burgerBun {
-    background-color: var(--mantine-color-default);
-    display: block;
-    position: fixed;
-    opacity: 1;
-    width: 100%;
-    top: 0px;
-    left: 0px;
-    height: 13vmin;
-    z-index: 1001;
-    border-bottom: rem(1px) solid var(--mantine-color-default-border);
-  }
-  .toggleButton {
-    display: block;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1220;
-  }
-
-  .header {
-    margin-top: 13vmin;
-  }
-}
-
-@media (min-width: 769px) {
-  .mobileNavbar {
-    display: none;
-  }
-
-  .burgerBun {
-    background-color: var(--mantine-color-default);
-    display: none;
-    position: fixed;
-    width: 100vmin;
-    top: 0;
-    height: 12vmin;
-    z-index: 1001;
-  }
-
-  .desktopNavbar {
-    width: 15%;
-    height: 100vmin;
-    left: 0;
-  }
+  margin: 0px;
+  top: 0px;
+  height: 95vh;
+  left: 0;
 }
 
 .links {

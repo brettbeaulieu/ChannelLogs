@@ -1,0 +1,18 @@
+.main {
+  display: flex;
+  flex-direction: row;
+  justify-content: baseline;
+  height: 100%;
+  width: 100%;
+}
+
+.top_paper, .paper {
+  background-color: var(--mantine-color-default);
+  border-radius: 0;
+}
+
+
+.container {
+}
+
+

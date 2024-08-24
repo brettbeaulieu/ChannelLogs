@@ -1,28 +1,23 @@
-import React, { ForwardRefExoticComponent, RefAttributes } from 'react';
-import { Group, Loader, Paper, SimpleGrid, Text } from '@mantine/core';
-import { IconArrowUpRight, IconArrowDownRight, IconProps, Icon } from '@tabler/icons-react'; // Adjust imports if necessary
+import React, { useCallback, useEffect, useState } from 'react';
+import { Group, NumberFormatter, Paper, SimpleGrid, Skeleton, Stack, Text } from '@mantine/core';
+import { IconArrowDownRight, IconMessage, IconUser } from '@tabler/icons-react'; // Adjust imports if necessary
 import styles from './StatsGrid.module.css';
-
-type IconType = ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
+import { getData } from '@/api/apiHelpers';
 
 export interface DataStruct {
     title: string;
-    value: any;
-    diff: number;
+    value: number;
 }
 
 export interface StatsGridProps {
-    data?: DataStruct[];
-    icons?: IconType[];
-    period?: string;
-    isLoading?: boolean;
+    dateRange: [Date | null, Date | null];
 }
 
-// Provide default values for data and icons
-const defaultData: DataStruct[] = [];
-const defaultIcons: IconType[] = [IconArrowDownRight]; // At least one icon should be available
+export function StatsGrid({ dateRange }: StatsGridProps) {
+    const [userData, setUserData] = useState<DataStruct>({ title: "N/A", value: 0 });
+    const [msgsData, setMsgsData] = useState<DataStruct>({ title: "N/A", value: 0 });
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
-export function StatsGrid({ data = defaultData, icons = defaultIcons, period = 'day', isLoading = true }: StatsGridProps) {
     // Default icon to use if none are provided
     const DefaultIcon = IconArrowDownRight;
 
@@ -30,52 +25,102 @@ export function StatsGrid({ data = defaultData, icons = defaultIcons, period = '
     const defaultTitle = 'N/A';
     const defaultValue = 'N/A';
     const defaultDiff = 0;
+    const formatDate = (date: Date | null): string | null => {
+        return date ? date.toISOString().split('T')[0] : null;
+    };
 
-    // Handle case where there might be fewer icons than data items
-    const iconList = icons.length > 0 ? icons : defaultIcons;
 
-    const stats = data.map((stat, index) => {
-        // Use provided data or fallback values
-        const title = stat.title || defaultTitle;
-        const value = stat.value !== undefined ? stat.value : defaultValue;
-        const diff = stat.diff !== undefined ? stat.diff : defaultDiff;
+    const fetchUserData = useCallback(async (startDate: string, endDate: string) => {
+        try {
+            const response = await getData('chat/messages/unique_users', { start_date: startDate, end_date: endDate });
+            const data = await response.json();
+            // Assuming the data is { value: x }
+            return {
+                title: 'Unique Users', // Add appropriate title here
+                value: data.value || 0,
+            };
+        } catch (error) {
+            console.error('Error fetching stat data:', error);
+            return {
+                title: 'Unique Users', // Default title for error case
+                value: 0,
+            };
+        }
+    }, []);
 
-        // Use provided icon or fallback icon
-        const Icon = iconList[index] || defaultIcons[0];
-        const DiffIcon = diff > 0 ? IconArrowUpRight : IconArrowDownRight;
+    const fetchMessageData = useCallback(async (startDate: string, endDate: string) => {
+        try {
+            const response = await getData('chat/messages/message_count', { start_date: startDate, end_date: endDate });
+            const data = await response.json();
+            // Assuming the data is { value: x }
+            return {
+                title: 'Message Count', // Add appropriate title here
+                value: data.value || 0,
+            };
+        } catch (error) {
+            console.error('Error fetching stat data:', error);
+            return {
+                title: 'Message Count', // Default title for error case
+                value: 0,
+            };
+        }
+    }, []);
 
-        return (
-            <Paper withBorder p="md" radius="md" key={index} className={styles.box}>
-                {isLoading ? (<Loader type='dots' />) :
-                    (
-                        <>
-                            <Group justify="space-between">
-                                <Text size="xs" c="dimmed" className={styles.title}>
-                                    {title}
-                                </Text>
-                                <Icon className={styles.icon} size="1.4rem" stroke={1.5} />
-                            </Group>
+    useEffect(() => {
+        const updateStats = async () => {
+            setIsLoading(true);
+            const startDate = formatDate(dateRange[0]);
+            const endDate = formatDate(dateRange[1]);
 
-                            <Group align="flex-end" gap="xs" mt={15}>
-                                <Text className={styles.value}>{value}</Text>
-                                <Text c={diff > 0 ? 'teal' : 'red'} fz="sm" fw={500} className={styles.diff}>
-                                    <span>{diff}%</span>
-                                    <DiffIcon size="1rem" stroke={1.5} />
-                                </Text>
-                            </Group>
-                            <Text fz="xs" c="dimmed" mt={7}>
-                                Compared to previous {period}
-                            </Text>
-                        </>
-                    )}
-            </Paper>
-        );
-    });
+            if (!startDate || !endDate) {
+                console.error('Both start date and end date must be selected.');
+                setIsLoading(false);
+                return;
+            }
+
+            const userResponse = await fetchUserData(startDate, endDate);
+            const msgsResponse = await fetchMessageData(startDate, endDate);
+            setUserData(userResponse);
+            setMsgsData(msgsResponse);
+            setIsLoading(false);
+        }
+        updateStats();
+    }
+        , [fetchUserData, fetchMessageData, dateRange]);
 
     return (
         <div className={styles.root}>
             <SimpleGrid cols={2} spacing="md">
-                {stats}
+                <Paper withBorder>
+                    <Skeleton visible={isLoading}>
+                        <Stack className={styles.stack}>
+                            <Group justify='space-between'>
+                                <Text size="xs" c="dimmed" className={styles.title}>
+                                    {msgsData.title}
+                                </Text>
+                                <IconMessage className={styles.icon} size="1.4rem" stroke={1.5} />
+                            </Group>
+                            <Text className={styles.value}>
+                                {<NumberFormatter thousandSeparator value={msgsData.value} />}
+                            </Text>
+                        </Stack>
+                    </Skeleton>
+                </Paper>
+                <Paper withBorder>
+                    <Skeleton visible={isLoading}>
+                        <Stack className={styles.stack}>
+                            <Group justify='space-between'>
+                                <Text size="xs" c="dimmed" className={styles.title}>
+                                    {userData.title}
+                                </Text>
+                                <IconUser className={styles.icon} size="1.4rem" stroke={1.5} />
+                            </Group>
+                            <Text className={styles.value}>
+                                {<NumberFormatter thousandSeparator value={userData.value} />}
+                            </Text>
+                        </Stack>
+                    </Skeleton>
+                </Paper>
             </SimpleGrid>
         </div>
     );

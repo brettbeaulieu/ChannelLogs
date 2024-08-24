@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import { ActionIcon, Group, Paper, rem, Text } from '@mantine/core';
-import { IconChartArea, IconChartBar } from '@tabler/icons-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Group, Paper, Skeleton, Stack, Text } from '@mantine/core';
 import styles from './InteractiveAreaChart.module.css';
-import { AreaChart, AreaChartCurveType, AreaChartType, BarChart } from '@mantine/charts';
+import { AreaChart, AreaChartType, BarChart } from '@mantine/charts';
+import { getData } from '@/api/apiHelpers';
 
-
-export interface DataStruct {
+interface GraphItem {
     date: string;
-    value: any;
+    value: number;
 }
 
 export interface SeriesStruct {
@@ -18,91 +17,140 @@ export interface SeriesStruct {
 
 
 export interface ChartProps {
-    data: DataStruct[];
-    series: any[];
+    dateRange: [Date | null, Date | null];
+    fetchURL: string;
     dataKey: string;
+    series: SeriesStruct[];
+    useMA: boolean;
+    maPeriod?: string | number;
     granularity?: string;
-    title?: string;
     unit?: string;
-    type?: string;
+    type?: AreaChartType;
+    style?: string;
+    title?: string;
+    yAxisRange?: [number, number];
+
 }
 
+const calculateYAxisRange = (data: GraphItem[]): [number, number] => {
+    if (data.length === 0) return [0, 100]; // Default range if no data
 
+    const values = data.map(item => item.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
 
+    // Example condition: expand the range by 10% if min and max are close
+    const rangePadding = (maxValue - minValue) * 0.1;
+    return [minValue - rangePadding, maxValue + rangePadding];
+};
 
-// Provide default values for data and icons
-const defaultData: DataStruct[] = [];
-const defaultSeries: SeriesStruct[] = [];
-const defaultKey: string = 'date';
-const defaultGran: string = 'day';
-const defaultTitle: string = '';
-const defaultUnit: string = '';
-const defaultType: AreaChartType = 'default';
+const smoothLineChartData = (data: GraphItem[], windowSize: number): GraphItem[] => {
+    if (windowSize < 1) {
+        throw new Error('Window size must be at least 1');
+    }
 
-export function InteractiveAreaChart({ data = defaultData, series = defaultSeries, dataKey = defaultKey, granularity = defaultGran, title = defaultTitle, unit = defaultUnit, type = defaultType }: ChartProps) {
-    const [smoothing, setSmoothing] = useState<AreaChartCurveType | undefined>("linear");
-    const [chartType, setChartType] = useState<AreaChartType>("default");
+    const smoothedData = data.map((_, i) => {
+        const start = Math.max(0, i - Math.floor(windowSize / 2));
+        const end = Math.min(data.length, i + Math.ceil(windowSize / 2));
+        const window = data.slice(start, end);
+        const average = window.reduce((sum, item) => sum + item.value, 0) / window.length;
 
-    const handleChartTypeChange = (type: AreaChartType) => {
-        setChartType(type);
-    };
+        return {
+            date: data[i].date,
+            value: average,
+        };
+    });
 
-    const handleSmoothingChange = (value: string | null) => {
-        if (value) {
-            setSmoothing(value as AreaChartCurveType);
-        } else {
-            setSmoothing(undefined); // Handle the case where value is null
+    return smoothedData;
+};
+
+const formatDate = (date: Date | null): string | null => {
+    return date ? date.toISOString().split('T')[0] : null;
+};
+
+const formatXAxis = (tickItem: any, granularity: string): string => {
+    const date = new Date(tickItem);
+    switch (granularity) {
+        case 'Minute':
+            return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`;
+        case 'Hour':
+            return `${date.getUTCHours().toString().padStart(2, '0')}:00`;
+        case 'Day':
+            return `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}/${date.getUTCDate().toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
+        case 'Week':
+            const startOfWeek = new Date(date);
+            startOfWeek.setDate(date.getDate() - date.getDay());
+            return `Week of ${startOfWeek.toLocaleDateString()}`;
+        case 'Month':
+            return `${date.getMonth() + 1}/${date.getFullYear()}`;
+        default:
+            return date.toLocaleDateString();
+    }
+};
+
+const defaultGran = 'day';
+const defaultUnit = '';
+const defaultType = 'default';
+const defaultStyle = 'Area';
+const defaultPeriod = 1;
+const defaultTitle = 'Untitled';
+
+export function InteractiveAreaChart({ dateRange, fetchURL, dataKey, series, useMA, maPeriod = defaultPeriod, granularity = defaultGran, unit = defaultUnit, style = defaultStyle, type = defaultType, title = defaultTitle, yAxisRange }: ChartProps) {
+    const [graphData, setGraphData] = useState<GraphItem[]>([]);
+    const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(true);
+
+    const fetchGraphData = useCallback(async (granularity: string, startDate: string, endDate: string) => {
+        granularity = granularity.toLowerCase().replace(/\s+/g, '') || 'day';
+        try {
+            const response = await getData(fetchURL, { granularity, start_date: startDate, end_date: endDate });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching graph data:', error);
+            return [];
         }
-    };
+    }, [fetchURL]);
 
-    const formatXAxis = (tickItem: any) => {
-        const date = new Date(tickItem);
-        console.log(granularity)
-        switch (granularity) {
-            case 'Minute':
-                return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`;
-            case 'Hour':
-                return `${date.getUTCHours().toString().padStart(2, '0')}:00`;
-            case 'Day':
-                return `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}/${date.getUTCDate().toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
-            case 'Week':
-                const startOfWeek = new Date(date);
-                startOfWeek.setDate(date.getDate() - date.getDay()); // Set to start of the week
-                return `Week of ${startOfWeek.toLocaleDateString()}`;
-            case 'Month':
-                return `${date.getMonth() + 1}/${date.getFullYear()}`;
-            default:
-                return date.toLocaleDateString();
-        }
-    };
+
+    useEffect(() => {
+        const updateGraph = async () => {
+            setIsLoadingGraph(true);
+            const startDate = formatDate(dateRange[0]);
+            const endDate = formatDate(dateRange[1]);
+
+            if (!startDate || !endDate) {
+                console.error('Both start date and end date must be selected.');
+                setIsLoadingGraph(false);
+                return;
+            }
+
+            const data = await fetchGraphData(granularity, startDate, endDate);
+            const smoothedData = useMA ? smoothLineChartData(data, Number(maPeriod)) : data;
+            setGraphData(smoothedData);
+            setIsLoadingGraph(false);
+        };
+
+        updateGraph();
+    }, [fetchGraphData, granularity, dateRange, useMA, maPeriod]);
+
+    const [yMin, yMax] = yAxisRange ?? calculateYAxisRange(graphData);
+
 
     return (
         <div className={styles.root}>
-            <Paper shadow='xs'>
+            <Paper shadow='xs' withBorder className={styles.mainPaper}>
                 {
                     <Group className={styles.mainWidget}>
-                        <Group className={styles.headerGroup}>
-                            <Group className={styles.actionGroup}>
-                                <ActionIcon className={styles.icon} variant="default" size="lg" aria-label="Area Chart" onClick={() => handleChartTypeChange('area')}
-                                >
-                                    <IconChartArea style={{ width: rem(25) }} stroke={1.5}>
-                                    </IconChartArea>
-                                </ActionIcon>
-                                <ActionIcon className={styles.icon} variant="default" size="lg" aria-label="Gallery" onClick={() => handleChartTypeChange('bar')}>
-                                    <IconChartBar style={{ width: rem(25) }} stroke={1.5} />
-                                </ActionIcon>
-                            </Group>
-                            <Group justify='center' align='center' className={styles.headerTextGroup}>
-                                <Text size="xl" fw={300} fz={'h2'}>{title}</Text>
-                            </Group>
-                        </Group>
-                        {chartType == 'default' ? (<AreaChart data={data} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
-                            className={styles.chart} curveType={smoothing} withDots={false} gridAxis='xy' tickLine='xy' unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: formatXAxis }} areaChartProps={{ syncId: 'msgs' }}
-                        />) :
-                            (<BarChart data={data} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: formatXAxis }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
+                        <Skeleton visible={isLoadingGraph}>
+                            <Stack className={styles.innerGroup} gap="xs">
+                                <Text size="xl" ta="left" c="dimmed" className={styles.title}> {title} </Text>
+                                {style == 'Area' ? (<AreaChart data={graphData} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
+                                    className={styles.chart} withLegend withDots={false} tickLine='xy' unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} areaChartProps={{ syncId: 'msgs' }}
+                                />) :
+                                    (<BarChart data={graphData} dataKey={dataKey} series={series} withLegend valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
+                            </Stack>
+                        </Skeleton>
                     </Group>
-
-
                 }
             </Paper>
         </div>

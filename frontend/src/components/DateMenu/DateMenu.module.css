@@ -1,9 +1,11 @@
 .dateRoot {}
 
 .button {
-    background-color: var(--mantine-color-default);
+    background-color: var(--mantine-color-body);
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--mantine-color-default-border);
     color: var(--mantine-color-text);
-    border-radius: 1rem;
 }
 
 .dropdown {

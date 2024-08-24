@@ -128,10 +128,15 @@ def batch_insert_users(cursor, users_list, batch_size):
         cursor.executemany(query, [(user,) for user in batch])
 
 
-def batch_insert_messages(cursor, messages_list, batch_size):
-    query = sql.SQL(
-        "INSERT INTO {table} (parent_log_id, timestamp, user_id, message, sentiment_score) VALUES (%s, %s, %s, %s, %s)"
-    ).format(table=sql.Identifier(DB_MSG))
+def batch_insert_messages(cursor, useSentiment, messages_list, batch_size):
+    if useSentiment:
+        query = sql.SQL(
+            "INSERT INTO {table} (parent_log_id, timestamp, user_id, message, sentiment_score) VALUES (%s, %s, %s, %s, %s)"
+        ).format(table=sql.Identifier(DB_MSG))
+    else:
+        query = sql.SQL(
+            "INSERT INTO {table} (parent_log_id, timestamp, user_id, message) VALUES (%s, %s, %s, %s)"
+        ).format(table=sql.Identifier(DB_MSG))
     for i in range(0, len(messages_list), batch_size):
         batch = messages_list[i : i + batch_size]
         cursor.executemany(query, batch)
@@ -208,6 +213,7 @@ def preprocess_log(
     parent_id: int,
     log_path: str,
     format: str,
+    useSentiment: bool,
     useEmotes: bool,
     emoteSetName: str,
     filterEmotes: bool,
@@ -215,6 +221,7 @@ def preprocess_log(
 ):
     # Get emote set
     emoteList = None
+
     if useEmotes:
         emoteList = get_emote_list(emoteSetName)
 
@@ -230,63 +237,65 @@ def preprocess_log(
         message_validator = is_valid_message_with_filter
         message_lambda = lambda x: message_validator(x["message"], minWords, emoteList)
 
-    # Initialize pipeline for zero-shot
-    pipe = pipeline(
-        "zero-shot-classification",
-        model="cross-encoder/nli-distilroberta-base",
-        device=0,
-        batch_size=16,
-    )
+    if useSentiment:
+        # Initialize pipeline for zero-shot
+        pipe = pipeline(
+            "zero-shot-classification",
+            model="cross-encoder/nli-distilroberta-base",
+            device=0,
+            batch_size=16,
+        )
 
-    # Create a Dataset object
-    dataset = Dataset.from_dict(
-        {
-            "timestamp": [item["timestamp"] for item in form_data_list],
-            "user": [item["user"] for item in form_data_list],
-            "message": [item["message"] for item in form_data_list],
+        # Create a Dataset object
+        dataset = Dataset.from_dict(
+            {
+                "timestamp": [item["timestamp"] for item in form_data_list],
+                "user": [item["user"] for item in form_data_list],
+                "message": [item["message"] for item in form_data_list],
+            }
+        )
+
+        filtered_dataset = dataset.filter(message_lambda)
+
+        # Perform classification
+        messages = [
+            filter_emotes_from_message(msg, emoteList)[0] if filterEmotes else msg
+            for msg in filtered_dataset["message"]
+        ]
+        emotion_results = pipe(
+            messages, ["positive opinion", "negative opinion", "neutral opinion"]
+        )
+
+        translate = {
+            "negative opinion": -1,
+            "neutral opinion": 0,
+            "positive opinion": 1,
         }
-    )
 
-    filtered_dataset = dataset.filter(message_lambda)
+        # Map results back to the dataset
+        sentiment_score = [translate[result["labels"][0]] for result in emotion_results]
 
-    # Perform classification
-    messages = [
-        filter_emotes_from_message(msg, emoteList)[0] if filterEmotes else msg
-        for msg in filtered_dataset["message"]
-    ]
-    emotion_results = pipe(
-        messages, ["positive opinion", "negative opinion", "neutral opinion"]
-    )
+        filtered_dataset = filtered_dataset.add_column("sentiment_score", sentiment_score)
 
-    translate = {
-        "negative opinion": -1,
-        "neutral opinion": 0,
-        "positive opinion": 1,
-    }
+        # Build a dictionary for quick lookup
+        filtered_data_dict = {item["message"]: item for item in filtered_dataset}
 
-    # Map results back to the dataset
-    sentiment_score = [translate[result["labels"][0]] for result in emotion_results]
+        # Count emotes in messages
+        if useEmotes:
+            emote_counts = count_emotes(dataset, emoteList)
 
-    filtered_dataset = filtered_dataset.add_column("sentiment_score", sentiment_score)
+        # Update the original list with classification results
+        for item in form_data_list:
 
-    # Build a dictionary for quick lookup
-    filtered_data_dict = {item["message"]: item for item in filtered_dataset}
-
-    # Count emotes in messages
-    if useEmotes:
-        emote_counts = count_emotes(dataset, emoteList)
-
-    # Update the original list with classification results
-    for item in form_data_list:
-
-        if not message_lambda(item):
-            item.update({"sentiment_score": None})
-        else:
-            filtered_item = filtered_data_dict.get(item["message"], {})
-            item.update({"sentiment_score": filtered_item.get("sentiment_score")})
+            if not message_lambda(item):
+                item.update({"sentiment_score": None})
+            else:
+                filtered_item = filtered_data_dict.get(item["message"], {})
+                item.update({"sentiment_score": filtered_item.get("sentiment_score")})
 
     # Patch emote counts, add key to record containing value of the 'emote_counts' data structure
-    update_emote_counts(parent_id, emoteSetName, emote_counts)
+    if useEmotes:
+        update_emote_counts(parent_id, emoteSetName, emote_counts)
 
     # Batch insert new users + messages
     with psycopg2.connect(**DB_PARAMS) as conn:
@@ -302,16 +311,27 @@ def preprocess_log(
             user_ids = {row[1]: row[0] for row in cursor.fetchall()}
 
             # Format messages for batch insertion
-            msg_list = [
-                (
-                    parent_id,
-                    data["timestamp"],
-                    user_ids.get(data["user"], None),
-                    data["message"],
-                    data["sentiment_score"],
-                )
-                for data in form_data_list
-            ]
+            if useSentiment:
+                msg_list = [
+                    (
+                        parent_id,
+                        data["timestamp"],
+                        user_ids.get(data["user"], None),
+                        data["message"],
+                        data["sentiment_score"],
+                    )
+                    for data in form_data_list
+                ]
+            else:
+                msg_list = [
+                    (
+                        parent_id,
+                        data["timestamp"],
+                        user_ids.get(data["user"], None),
+                        data["message"],
+                    )
+                    for data in form_data_list
+                ]
 
             # Batch insert messages
-            batch_insert_messages(cursor, msg_list, BATCH_SIZE)
+            batch_insert_messages(cursor, useSentiment, msg_list, BATCH_SIZE)

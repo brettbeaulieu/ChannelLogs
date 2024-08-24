@@ -3,31 +3,22 @@
     width: 100%;
 }
 
-.selectSmooth {
-    padding: 1rem;
+.mainPaper {
+    border-radius: 0px;
 }
 
 .chart {
-    height: 700px;
+    height: 250px;
     width: 100%;
-    padding: 2rem;
+    min-height: 100px;
+    min-width: 100px;
 }
 
-.actionGroup {
-    width: 10%;
-    padding: 1rem;
-    
+.title {
+    margin-bottom: 0px;
+    font-weight: 700;
 }
 
-.icon {
-    width: 3rem;
-    height: 3rem;
-}
-
-.headerGroup {
-    flex-grow: 1;
-}
-
-.headerTextGroup {
-    width: 40%;
+.innerGroup {
+    padding: var(--mantine-spacing-md);
 }

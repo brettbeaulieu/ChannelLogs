@@ -369,6 +369,51 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         return Response(running_sum_data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"])
+    def sentiment_pie(self, request):
+        start_date_str = request.query_params.get("start_date")
+        end_date_str = request.query_params.get("end_date")
+        # Handle default date values
+        if not start_date_str:
+            start_date_str = "0001-01-01T00:00:00"
+        if not end_date_str:
+            end_date_str = "3001-01-01T00:00:00"
+        try:
+            start_date = parse_datetime(start_date_str)
+            end_date = parse_datetime(end_date_str)
+            if not start_date or not end_date:
+                raise ValueError("Invalid date format")
+        except ValueError:
+            return Response(
+                {"error": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Aggregate positive, neutral, and negative scores.
+        aggregated_data = (
+            Message.objects.filter(timestamp__range=[start_date, end_date])
+            .values("sentiment_score")
+            .annotate(count=Count("sentiment_score"))
+            .order_by("sentiment_score")
+        )
+
+        # Create a dictionary to map sentiment scores to their names
+        sentiment_mapping = {
+            1: 'Positive',
+            0: 'Neutral',
+            -1: 'Negative'
+        }
+
+        # Create a list to store the formatted response
+        response_data = [
+            {
+                "name": sentiment_mapping.get(entry['sentiment_score'], 'Unknown'),
+                "value": entry['count']
+            }
+            for entry in aggregated_data
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
 
 def calculate_moving_average(data, period):
     """Calculate the moving average of the values."""

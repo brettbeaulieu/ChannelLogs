@@ -20,7 +20,8 @@ export interface PreprocessModalProps {
 
 export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProps) {
     const [useEmotes, setUseEmotes] = useState<boolean | undefined>(false);
-    const [filterEmotes, setFilterEmotes] = useState(false);
+    const [useSentiment, setUseSentiment] = useState<boolean | undefined>(false);
+    const [filterEmotes, setFilterEmotes] = useState<boolean | undefined>(false);
     const [minWords, setMinWords] = useState<string | number>(1);
     const [selectedFormat, setSelectedFormat] = useState<string | null>(null);
     const [selectedSet, setSelectedSet] = useState<string | null>(null);
@@ -53,14 +54,14 @@ export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProp
 
     const handleSubmit = async () => {
         const formData = new FormData;
-        formData.append('parent_ids', JSON.stringify(Array.from(parent_ids)));
+        formData.append('parentIds', JSON.stringify(Array.from(parent_ids)));
         formData.append('format', selectedFormat ? selectedFormat : '');
-        formData.append('useEmotes', useEmotes ? 'true' : 'false');
-        if (useEmotes && selectedSet) {
-            formData.append('emote-set', selectedSet.toString());
-            formData.append('filter_emotes', filterEmotes.toString());
-        }
+        formData.append('useSentiment', String(useSentiment));
+        formData.append('useEmotes', String(useEmotes));
+        formData.append('emoteSet', selectedSet ? selectedSet.toString() : '');
+        formData.append('filterEmotes', String(useEmotes && filterEmotes));
         formData.append('minWords', minWords.toString());
+
         await postData(`chat/files/preprocess/`, formData);
     }
 
@@ -90,12 +91,16 @@ export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProp
                                         <Select label="Log Format" data={["Chatterino", "Rustlog"]} value={selectedFormat} onChange={(value) => setSelectedFormat(value)} />
                                     </Accordion.Panel>
                                 </Accordion.Item>
-                                <Accordion.Item key='emote' value='emote'>
-                                    <Accordion.Control>{<Text size="xl">Emotes</Text>
+                                <Accordion.Item key='features' value='features'>
+                                    <Accordion.Control>{<Text size="xl">Features</Text>
                                     }</Accordion.Control>
                                     <Accordion.Panel className={styles.accordion_panel}>
                                         <Stack>
-                                            <Checkbox label={"Use Emotes"} checked={useEmotes}
+                                            <Checkbox label={"Use Sentiment Analysis"} checked={useSentiment}
+                                                onChange={(event) => setUseSentiment(event.currentTarget.checked)} />
+                                            <NumberInput label="Minimum Words" disabled={!useSentiment} value={minWords} onChange={setMinWords} /> 
+
+                                            <Checkbox label={"Use 7TV Emotes"} checked={useEmotes}
                                                 onChange={(event) => setUseEmotes(event.currentTarget.checked)} />
                                             <Text c={useEmotes ? ("") : ("dimmed")}>Emote Set</Text>
                                             <Combobox
@@ -126,17 +131,13 @@ export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProp
                                                     </Combobox.Options>
                                                 </Combobox.Dropdown>
                                             </Combobox>
-                                            <Checkbox disabled={!useEmotes}
+                                            <Checkbox disabled={!useEmotes || !useSentiment}
                                                 label={'Filter Emotes for Sentiment Analysis'}
-                                                value={filterEmotes.toString()}
+                                                checked={filterEmotes}
+                                                defaultChecked={false}
                                                 onChange={(event) => setFilterEmotes(event.currentTarget.checked)} />
+
                                         </Stack>
-                                    </Accordion.Panel>
-                                </Accordion.Item>
-                                <Accordion.Item key='misc' value='misc'>
-                                    <Accordion.Control>{<Text size="xl">Misc</Text>}</Accordion.Control>
-                                    <Accordion.Panel className={styles.accordion_panel}>
-                                        <NumberInput label="Minimum Words" value={minWords} onChange={setMinWords} />
                                     </Accordion.Panel>
                                 </Accordion.Item>
                             </Accordion>
