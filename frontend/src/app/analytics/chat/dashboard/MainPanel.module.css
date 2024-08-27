@@ -2,11 +2,13 @@
     width: 100%;
     background-color: var(--mantine-color-body);
     border-radius: 0px;
-    height: 95vh;
+    height: 92vh;
+    max-height: 92vh;
   }
   
   .mainStack {
     height: 100%;
+    max-height: 95vh;
   }
   
   .mainPaper {

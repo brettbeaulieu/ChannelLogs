@@ -1,5 +1,4 @@
 .root {
-    height: 100%;
     width: 100%;
 }
 
@@ -8,7 +7,7 @@
 }
 
 .chart {
-    height: 250px;
+    height: 200px;
     width: 100%;
     min-height: 100px;
     min-width: 100px;

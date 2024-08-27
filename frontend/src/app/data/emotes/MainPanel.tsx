@@ -3,9 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { Group, Button, Text, Paper, TextInput, Stack } from '@mantine/core';
-import { NavbarNested, EmoteSetTable } from '@/components';
+import { EmoteSetTable } from '@/components';
 import { EmoteSetData } from '@/components/EmoteSetTable/EmoteSetTable';
-import { initiallyOpenedStates } from '../opened_states';
 import styles from './MainPanel.module.css';
 import { getData, postData, deleteData, patchData } from '@/api/apiHelpers'
 
@@ -20,7 +19,7 @@ export default function MainPanel() {
 
     const fetchFiles = async () => {
         try {
-            const response = await getData('chat/emote-sets');
+            const response = await getData('chat/emotesets');
 
             const data = await response.json();
             console.log(data);
@@ -36,7 +35,7 @@ export default function MainPanel() {
     };
 
     const handleDelete = async (fileId: string) => {
-        await deleteData(`chat/emote-sets/${fileId}/`);
+        await deleteData(`chat/emotesets/${fileId}/`);
         await fetchFiles();
     };
 
@@ -45,7 +44,7 @@ export default function MainPanel() {
         const formData = new FormData();
         formData.append('name', newName);
 
-        await patchData(`chat/emote-sets/${fileId}/`, formData);
+        await patchData(`chat/emotesets/${fileId}/`, formData);
         await fetchFiles();
     }
 
@@ -65,7 +64,7 @@ export default function MainPanel() {
         const formData = new FormData();
         formData.append('id', inputURL);
 
-        await postData("chat/emote-sets/", formData);
+        await postData("chat/emotesets/", formData);
         await fetchFiles();
 
     }
@@ -74,7 +73,7 @@ export default function MainPanel() {
     const handleDeleteAll = async () => {
         if (window.confirm('Are you sure you want to delete all files?')) {
             try {
-                const response = await deleteData('chat/emote-sets/delete_all/');
+                const response = await deleteData('chat/emotesets/delete_all/');
                 console.log(`Status: ${response.status}`);
                 if (response.status != 204) {
                     throw new Error(`Failed to delete all files: ${response.status}`);

@@ -1,4 +1,9 @@
 .root {
+
+}
+
+.paper {
+    border-radius: 0;
 }
 
 .stack {

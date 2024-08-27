@@ -1,4 +1,5 @@
 import numpy as np
+from django.db import connection
 from django.db.models import Count, Min, Avg, Sum
 from django.utils.dateparse import parse_datetime
 from rest_framework import status, viewsets
@@ -6,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ..common import GRANULARITY
-from ..models import Message
+from ..models import Message, Emote
 from ..serializers import DateTimeSerializer, MessageSerializer
 
 
@@ -397,20 +398,41 @@ class MessageViewSet(viewsets.ModelViewSet):
         )
 
         # Create a dictionary to map sentiment scores to their names
-        sentiment_mapping = {
-            1: 'Positive',
-            0: 'Neutral',
-            -1: 'Negative'
-        }
+        sentiment_mapping = {1: "Positive", 0: "Neutral", -1: "Negative"}
 
         # Create a list to store the formatted response
         response_data = [
             {
-                "name": sentiment_mapping.get(entry['sentiment_score'], 'Unknown'),
-                "value": entry['count']
+                "name": sentiment_mapping.get(entry["sentiment_score"], "Unknown"),
+                "value": entry["count"],
             }
             for entry in aggregated_data
         ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def popular_emotes(self, request):
+        start_date_str = request.query_params.get("start_date")
+        end_date_str = request.query_params.get("end_date")
+        # Handle default date values
+        if not start_date_str:
+            start_date_str = "0001-01-01T00:00:00"
+        if not end_date_str:
+            end_date_str = "3001-01-01T00:00:00"
+        try:
+            start_date = parse_datetime(start_date_str)
+            end_date = parse_datetime(end_date_str)
+            if not start_date or not end_date:
+                raise ValueError("Invalid date format")
+        except ValueError:
+            return Response(
+                {"error": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Query to sum values for each distinct key in 'emotes'
+        response_data = get_emote_sums(start_date, end_date)
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -459,3 +481,47 @@ def calculate_running_sum(data):
         result.append({"date": entry["date"], "value": running_total})
 
     return result
+
+
+def get_emote_sums(start_date, end_date):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            WITH json_data AS (
+                SELECT
+                    key AS emote_key,
+                    value AS emote_value
+                FROM api_message
+                CROSS JOIN LATERAL jsonb_each_text(emotes) AS emote_entry(key, value)
+                WHERE
+                    timestamp BETWEEN %s AND %s
+            ),
+            emote_sums AS (
+                SELECT
+                    emote_key,
+                    SUM(CAST(emote_value AS INTEGER)) AS total_sum
+                FROM json_data
+                GROUP BY
+                    emote_key
+            )
+            SELECT
+                emote_key,
+                total_sum
+            FROM emote_sums
+            ORDER BY
+                total_sum 
+            DESC;
+            """,
+            [start_date, end_date],
+        )
+        # Fetch all results
+        results = cursor.fetchall()
+        results = get_emote_ids(results)
+    return results
+
+def get_emote_ids(emote_counts: list[tuple[str,int]]):
+    new_list = []
+    for x in emote_counts:
+        obj = Emote.objects.get(name=x[0])
+        new_list.append({"id": obj.emote_id, "name": x[0], "value": x[1]})
+    return new_list

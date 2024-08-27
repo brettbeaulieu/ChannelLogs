@@ -78,7 +78,6 @@ class ChatFileViewSet(viewsets.ModelViewSet):
         ROW_IDS: list[str] = json.loads(request.POST.get("parentIds"))
         FORMAT: str = request.POST.get('format')
         USE_SENTIMENT = json.loads(request.POST.get('useSentiment').lower())
-        print(f'Use-sentiment: {USE_SENTIMENT}')
         USE_EMOTES = json.loads(request.POST.get('useEmotes').lower())
         EMOTE_SET = request.POST.get('emoteSet')
         FILTER_EMOTES = json.loads(request.POST.get('filterEmotes').lower())
@@ -101,7 +100,6 @@ class ChatFileViewSet(viewsets.ModelViewSet):
                 )
             
             # Dispatch preprocessing task to Celery
-            print(f'Filter_emotes: {FILTER_EMOTES}')
             preprocess_task.delay(row, obj.file.path, FORMAT, USE_SENTIMENT, USE_EMOTES, EMOTE_SET, FILTER_EMOTES, MIN_WORDS)
 
         return Response({"message": "Task dispatched!"}, status=status.HTTP_201_CREATED)

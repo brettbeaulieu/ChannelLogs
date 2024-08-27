@@ -39,9 +39,9 @@ const calculateYAxisRange = (data: GraphItem[]): [number, number] => {
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
 
-    // Example condition: expand the range by 10% if min and max are close
-    const rangePadding = (maxValue - minValue) * 0.1;
-    return [minValue - rangePadding, maxValue + rangePadding];
+    // Expand the max range by 10%
+    const rangePadding = Math.round((maxValue - minValue) * 0.1);
+    return [minValue, maxValue + rangePadding];
 };
 
 const smoothLineChartData = (data: GraphItem[], windowSize: number): GraphItem[] => {
@@ -72,11 +72,11 @@ const formatXAxis = (tickItem: any, granularity: string): string => {
     const date = new Date(tickItem);
     switch (granularity) {
         case 'Minute':
-            return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`;
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
         case 'Hour':
-            return `${date.getUTCHours().toString().padStart(2, '0')}:00`;
+            return `${date.getHours().toString().padStart(2, '0')}:00`;
         case 'Day':
-            return `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}/${date.getUTCDate().toString().padStart(2, '0')}/${date.getUTCFullYear()}`;
+            return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
         case 'Week':
             const startOfWeek = new Date(date);
             startOfWeek.setDate(date.getDate() - date.getDay());
@@ -143,11 +143,11 @@ export function InteractiveAreaChart({ dateRange, fetchURL, dataKey, series, use
                     <Group className={styles.mainWidget}>
                         <Skeleton visible={isLoadingGraph}>
                             <Stack className={styles.innerGroup} gap="xs">
-                                <Text size="xl" ta="left" c="dimmed" className={styles.title}> {title} </Text>
+                                <Text size="xl" ta="left" className={styles.title}> {title} </Text>
                                 {style == 'Area' ? (<AreaChart data={graphData} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
-                                    className={styles.chart} withLegend withDots={false} tickLine='xy' unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} areaChartProps={{ syncId: 'msgs' }}
+                                    className={styles.chart} withLegend withDots={false}  unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} areaChartProps={{ syncId: 'msgs' }}
                                 />) :
-                                    (<BarChart data={graphData} dataKey={dataKey} series={series} withLegend valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
+                                    (<BarChart data={graphData} dataKey={dataKey} series={series} withLegend valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }}  yAxisProps={{ domain: [yMin, yMax] }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
                             </Stack>
                         </Skeleton>
                     </Group>

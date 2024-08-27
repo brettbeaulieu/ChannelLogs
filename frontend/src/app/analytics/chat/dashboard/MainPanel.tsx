@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { InteractiveAreaChart, StatsGrid } from "@/components";
 import { Group, Paper, Stack } from "@mantine/core";
-import { ParametersGroup } from './components';
+import { EmoteList, ParametersGroup } from './components';
 import styles from "./MainPanel.module.css";
 
 const formatDate = (date: Date | null): string | null => {
@@ -97,6 +97,7 @@ export default function MainPanel() {
                 title={"Sentiment"}
                 yAxisRange={[-1, 1]}
               />
+              <EmoteList dateRange={dateRange}/>
             </Stack >
 
           </Group>

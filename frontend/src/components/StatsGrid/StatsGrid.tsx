@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { ReactElement, useCallback, useEffect, useState } from 'react';
 import { Group, NumberFormatter, Paper, SimpleGrid, Skeleton, Stack, Text } from '@mantine/core';
-import { IconArrowDownRight, IconMessage, IconUser } from '@tabler/icons-react'; // Adjust imports if necessary
+import { IconMessage, IconUser } from '@tabler/icons-react'; // Adjust imports if necessary
 import styles from './StatsGrid.module.css';
 import { getData } from '@/api/apiHelpers';
 
@@ -13,22 +13,32 @@ export interface StatsGridProps {
     dateRange: [Date | null, Date | null];
 }
 
+
 export function StatsGrid({ dateRange }: StatsGridProps) {
-    const [userData, setUserData] = useState<DataStruct>({ title: "N/A", value: 0 });
-    const [msgsData, setMsgsData] = useState<DataStruct>({ title: "N/A", value: 0 });
+    const [grids, setGrids] = useState<ReactElement[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-
-    // Default icon to use if none are provided
-    const DefaultIcon = IconArrowDownRight;
-
-    // Fallback values
-    const defaultTitle = 'N/A';
-    const defaultValue = 'N/A';
-    const defaultDiff = 0;
+    const [data, setData] = useState<{ user: DataStruct; messages: DataStruct } | null>(null);
     const formatDate = (date: Date | null): string | null => {
         return date ? date.toISOString().split('T')[0] : null;
     };
 
+    const buildGrid = useCallback((data: DataStruct) => {
+        return (
+            <Paper withBorder className={styles.paper}>
+                <Stack className={styles.stack}>
+                    <Group justify='space-between'>
+                        <Text size="xs" className={styles.title}>
+                            {data.title}
+                        </Text>
+                        <IconMessage className={styles.icon} size="1.4rem" stroke={1.5} />
+                    </Group>
+                    <Text className={styles.value}>
+                        {<NumberFormatter thousandSeparator value={data.value} />}
+                    </Text>
+                </Stack>
+            </Paper>
+        )
+    }, [isLoading]);
 
     const fetchUserData = useCallback(async (startDate: string, endDate: string) => {
         try {
@@ -77,50 +87,24 @@ export function StatsGrid({ dateRange }: StatsGridProps) {
                 setIsLoading(false);
                 return;
             }
-
-            const userResponse = await fetchUserData(startDate, endDate);
-            const msgsResponse = await fetchMessageData(startDate, endDate);
-            setUserData(userResponse);
-            setMsgsData(msgsResponse);
-            setIsLoading(false);
-        }
+            try {
+                const userResponse = await fetchUserData(startDate, endDate);
+                const msgsResponse = await fetchMessageData(startDate, endDate);
+                setData({ user: userResponse, messages: msgsResponse });
+            } catch (error) {
+                console.error("Error fetching stats grid data:", error)
+            } finally {
+                setIsLoading(false);
+            }
+        };
         updateStats();
-    }
-        , [fetchUserData, fetchMessageData, dateRange]);
+    }, [dateRange, fetchMessageData, fetchUserData]);
 
     return (
         <div className={styles.root}>
             <SimpleGrid cols={2} spacing="md">
-                <Paper withBorder>
-                    <Skeleton visible={isLoading}>
-                        <Stack className={styles.stack}>
-                            <Group justify='space-between'>
-                                <Text size="xs" c="dimmed" className={styles.title}>
-                                    {msgsData.title}
-                                </Text>
-                                <IconMessage className={styles.icon} size="1.4rem" stroke={1.5} />
-                            </Group>
-                            <Text className={styles.value}>
-                                {<NumberFormatter thousandSeparator value={msgsData.value} />}
-                            </Text>
-                        </Stack>
-                    </Skeleton>
-                </Paper>
-                <Paper withBorder>
-                    <Skeleton visible={isLoading}>
-                        <Stack className={styles.stack}>
-                            <Group justify='space-between'>
-                                <Text size="xs" c="dimmed" className={styles.title}>
-                                    {userData.title}
-                                </Text>
-                                <IconUser className={styles.icon} size="1.4rem" stroke={1.5} />
-                            </Group>
-                            <Text className={styles.value}>
-                                {<NumberFormatter thousandSeparator value={userData.value} />}
-                            </Text>
-                        </Stack>
-                    </Skeleton>
-                </Paper>
+                {data ? ([data.messages, data.user].map(buildGrid)) :
+                <Skeleton/>}
             </SimpleGrid>
         </div>
     );

@@ -4,20 +4,20 @@
 import { deleteData, getData, patchData } from '@/api/apiHelpers';
 import { FileData } from '@/app/data/chat/components/FileTable/FileTable';
 import { Button, Group, Paper, Stack, Text } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FileTable, FileUpload, RustlogImport } from './components';
 import styles from './MainPanel.module.css';
 
 export default function MainPanel() {
   const [files, setFiles] = useState<FileData[]>([]);
 
-  useEffect(() => {
-    fetchFiles();
-  }, []);
-
-  const fetchFiles = async () => {
+  
+  const fetchFiles = useCallback(async () => {
     try {
       const response = await getData('chat/files/');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch files: ${response.status}`);
+      }
       const data = await response.json();
 
       // Check if response.files is defined before setting state
@@ -29,22 +29,33 @@ export default function MainPanel() {
     } catch (error) {
       console.error('Error fetching files:', error);
     }
-  };
-
-
+  }, []);
+  
+  useEffect(() => {
+    fetchFiles();
+  }, [fetchFiles]);
 
   const handleDelete = async (fileId: string, fileName: string) => {
-    await deleteData(`chat/files/${fileId}/`);
-    await fetchFiles();
+    try {
+      await deleteData(`chat/files/${fileId}/`);
+      await fetchFiles();
+    } catch (error) {
+      console.error(`Error deleting file ${fileId}:`, error);
+    }
   };
 
   const handleEdit = async (fileId: string, newFileName: string) => {
-
-    const formData = new FormData();
-    formData.append('filename', newFileName);
-
-    await patchData(`chat/files/${fileId}/`, formData);
-    await fetchFiles();
+    try {
+      const formData = new FormData();
+      formData.append('filename', newFileName);
+      const response = await patchData(`chat/files/${fileId}/`, formData);
+      if (!response.ok) {
+        throw new Error(`Failed to edit file ${fileId}: ${response.status}`);
+      }
+      await fetchFiles();
+    } catch (error) {
+      console.error(`Error editing file ${fileId}:`, error);
+    }
   }
 
 
@@ -82,7 +93,13 @@ export default function MainPanel() {
             </Text>
             <Button color="red" onClick={handleDeleteAll}>Delete All</Button>
           </Group>
-          <FileTable files={files} onDelete={handleDelete} onEdit={handleEdit} onBulkDelete={() => { }} onBulkPreprocess={() => { }} />
+          <FileTable
+            files={files}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onBulkDelete={() => { }}
+            onBulkPreprocess={() => { }}
+          />
         </Paper>
       </Stack>
     </div>

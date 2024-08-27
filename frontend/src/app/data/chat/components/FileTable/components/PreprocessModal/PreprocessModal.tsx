@@ -33,7 +33,7 @@ export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProp
     console.log(`Parent IDs: ${Array.from(parent_ids)}`);
 
     const getEmoteSets = async () => {
-        const response = await getData('chat/emote-sets');
+        const response = await getData('chat/emotesets');
         const data: EmoteSetData[] = await response.json();
         return data;
     }
