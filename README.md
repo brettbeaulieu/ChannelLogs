@@ -25,4 +25,4 @@ docker compose up
 ````
 ### Access Application
 Simply connect to the frontend through a web browser
-- **Frontend**: [http://localhost:3000/](http://localhost:3000/) (Port 3000)
+- **Frontend**: [http://localhost:3000/](http://localhost:3000/) (Or port 3000 of hosting machine)
