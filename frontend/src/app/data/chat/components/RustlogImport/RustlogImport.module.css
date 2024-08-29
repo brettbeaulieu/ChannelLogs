@@ -17,3 +17,22 @@
     height: 15vh;
     border-radius: 0;
 }
+
+@media (min-width: 769px) {
+}
+
+@media (max-width: 768px) {
+
+    .inner_paper {
+        margin-top: 0px;
+    }
+
+    .inner_paper, .inner_paper_stack {
+        height: 37vh;
+        width: 100%;
+    }
+    .paramsGroup {
+        justify-content: center;
+        width: 100%;
+    }
+}

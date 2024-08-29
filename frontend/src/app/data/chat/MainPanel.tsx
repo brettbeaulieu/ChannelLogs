@@ -102,7 +102,7 @@ export default function MainPanel() {
     <Stack className={styles.mainStack}>
 
       <Paper className={styles.top_paper} shadow="xs">
-        <Group justify={'center'}>
+        <Group justify={'center'} gap={"sm"}>
           <FileUpload fetchFiles={fetchFiles} />
           <RustlogImport setTicketID={setTicketID} setIsPolling={setIsPolling} />
         </Group>

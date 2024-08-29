@@ -113,7 +113,7 @@ export function RustlogImport({ setTicketID, setIsPolling }: RustlogImportProps)
                 <Text className={styles.centered_header}>
                     Import From Rustlog API
                 </Text>
-                <Group align={"flex-end"}>
+                <Group align={"flex-end"} className={styles.paramsGroup}>
                     <TextInput
                         label={"Repository"}
                         value={repoName}

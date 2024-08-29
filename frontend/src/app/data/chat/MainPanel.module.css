@@ -1,6 +1,9 @@
 .mainStack {}
 
-.top_paper {}
+.top_paper {
+  margin: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-md);
+}
 
 .top_group {
   display: flex;
@@ -14,4 +17,14 @@
 .paper {
   background-color: var(--mantine-color-default);
   border-radius: 0;
+}
+
+@media (min-width: 769px) {
+}
+
+@media (max-width: 768px) {
+  .top_paper {
+    min-height: 60vh;
+  }
+
 }
