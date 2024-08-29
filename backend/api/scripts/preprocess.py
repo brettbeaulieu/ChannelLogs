@@ -1,9 +1,8 @@
 import re
-from collections import Counter, defaultdict
-from datasets import Dataset
+from collections import Counter
 from transformers import pipeline
 
-from ..models import ChatFile, EmoteSet, User, Message
+from ..models import ChatFile, Emote, User, Message
 
 # Constants
 CREATE_PREFIX = "bulk_create/"
@@ -102,7 +101,7 @@ def count_emotes_in_msg(message: str, emote_names: list[str]) -> dict[str, int]:
 
 
 def get_emote_list(emoteSetName):
-    return EmoteSet.objects.get(name=emoteSetName).emotes.all()
+    return Emote.objects.filter(parent_set__name=emoteSetName)
 
 
 def filter_emotes_from_message(message):
@@ -160,9 +159,6 @@ def preprocess_log(
     # Validate messages by length for sentiment analysis
     msg_validator = lambda x: is_valid_message(x, minWords, useEmotes)
 
-    print(f"Form_data_list[0]")
-    print(form_data_list[0])
-
     # Do sentiment analysis, if desired
     if useSentiment:
         # Initialize pipeline for zero-shot
@@ -173,12 +169,14 @@ def preprocess_log(
             batch_size=16,
         )
 
-
         if filterEmotes:
-            messages = [filter_emotes_from_message(msg) for msg in form_data_list if msg_validator(msg)]    
+            messages = [
+                filter_emotes_from_message(msg)
+                for msg in form_data_list
+                if msg_validator(msg)
+            ]
         else:
             messages = [msg["message"] for msg in form_data_list if msg_validator(msg)]
-
 
         emotion_results = pipe(
             messages, ["positive opinion", "negative opinion", "neutral opinion"]
@@ -203,10 +201,11 @@ def preprocess_log(
     users_to_create = [User(username=new_user) for new_user in new_users]
     User.objects.bulk_create(users_to_create)
 
-
     # Fetch all users
     usernames = {user_data["user"] for user_data in form_data_list}
-    users = {user.username: user for user in User.objects.filter(username__in=usernames)}
+    users = {
+        user.username: user for user in User.objects.filter(username__in=usernames)
+    }
 
     # Prepare messages in bulk
     parent_log = ChatFile.objects.get(id=parent_id)
@@ -216,7 +215,7 @@ def preprocess_log(
         # Extract user and remove it from the data dictionary
         user = users[user_data["user"]]
         message_data = {key: value for key, value in user_data.items() if key != "user"}
-        
+
         # Create a Message instance with the remaining data
         message = Message(parent_log=parent_log, user=user, **message_data)
         messages_to_create.append(message)

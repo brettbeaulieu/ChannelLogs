@@ -24,9 +24,11 @@ interface FileTableProps {
   onEdit: (fileId: string, newFileName: string) => void;
   onBulkPreprocess: (fileIds: string[]) => void;
   onBulkDelete: (fileIds: string[]) => void;
+  setTicketID: any;
+  setIsPolling: any;
 }
 
-export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDelete }: FileTableProps) {
+export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDelete, setTicketID, setIsPolling }: FileTableProps) {
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [newFileName, setNewFileName] = useState<string>('');
   const [drawerOpened, setDrawerOpened] = useState(false);
@@ -156,7 +158,7 @@ export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDel
         <Table.Td className={styles.actionCell}>
           <Box className={styles.actionGroup}>
             {file.is_preprocessed ? null : (
-              <PreprocessModal parent_ids={new Set<string>([file.id])} />
+              <PreprocessModal parent_ids={new Set<string>([file.id])} setTicketID={setTicketID} setIsPolling={setIsPolling} />
             )}
             <Tooltip label="Delete File">
               <Button color="red" onClick={() => onDelete(file.id, file.filename)} variant="subtle" size="xs">

@@ -1,4 +1,4 @@
-import { Paper, Stack, Loader, Button, Text } from "@mantine/core";
+import { Paper, Stack, Loader, Button, Text, Group } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import styles from './FileUpload.module.css';
 import { useRef, useState } from "react";
@@ -8,7 +8,7 @@ export interface FileUploadProps {
     fetchFiles: Function;
 }
 
-export function FileUpload({fetchFiles}: FileUploadProps) {
+export function FileUpload({ fetchFiles }: FileUploadProps) {
     const openRef = useRef<() => void>(null);
     const [loading, setLoading] = useState(false);
 
@@ -25,22 +25,20 @@ export function FileUpload({fetchFiles}: FileUploadProps) {
 
 
     return (
-        <Paper className={styles.inner_paper}>
+        <Paper className={styles.inner_paper} withBorder>
             <Stack className={styles.inner_paper_stack}>
                 <Text className={styles.centered_header}>
-                    Upload Your Files
+                    Upload Files
                 </Text>
+
                 <Dropzone
                     openRef={openRef}
                     onDrop={handleDrop}
                     className={styles.file_upload}
                 >
-                    {loading ? <Loader /> : 'Drop files here or click to select'}
+                    {loading ? <Loader /> : <Text size={"md"}>Drop files here or click to select</Text>}
                 </Dropzone>
-                <Button style={{ marginBottom: '1rem' }} onClick={() => openRef.current?.()}>Select files</Button>
             </Stack>
-
-
         </Paper>
     )
 };

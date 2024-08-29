@@ -3,15 +3,17 @@
 
 import { deleteData, getData, patchData } from '@/api/apiHelpers';
 import { FileData } from '@/app/data/chat/components/FileTable/FileTable';
-import { Button, Group, Paper, Stack, Text } from '@mantine/core';
+import { Group, Paper, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useCallback, useEffect, useState } from 'react';
 import { FileTable, FileUpload, RustlogImport } from './components';
 import styles from './MainPanel.module.css';
 
 export default function MainPanel() {
   const [files, setFiles] = useState<FileData[]>([]);
+  const [ticketID, setTicketID] = useState<string>('');
+  const [isPolling, setIsPolling] = useState<boolean>(false);
 
-  
   const fetchFiles = useCallback(async () => {
     try {
       const response = await getData('chat/files/');
@@ -30,7 +32,45 @@ export default function MainPanel() {
       console.error('Error fetching files:', error);
     }
   }, []);
-  
+
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (isPolling && ticketID) {
+      interval = setInterval(async () => {
+        try {
+          const response = await getData(`task_status?ticket=${ticketID}`);
+          const data = await response.json();
+
+          if (data.status == 'COMPLETED' || data.status == 'FAILED') {
+            setIsPolling(false); // Stop polling
+            await fetchFiles(); // Fetch updated files after the task completes or fails
+            notifications.show({
+              title: 'Task Complete',
+              message: `Status: ${data.status}`,
+            })
+          }
+        } catch (error) {
+          console.error('Error polling task status:', error);
+          setIsPolling(false); // Stop polling on error
+        }
+      }, 2000); // Poll every 2 seconds
+    }
+
+    // Cleanup function to clear the interval
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isPolling, ticketID, fetchFiles]);
+
+
+
+
+
+
   useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
@@ -58,50 +98,34 @@ export default function MainPanel() {
     }
   }
 
-
-  const handleDeleteAll = async () => {
-    if (window.confirm('Are you sure you want to delete all files?')) {
-      try {
-        const response = await deleteData('chat/files/delete_all')
-
-        if (!response.ok) {
-          throw new Error(`Failed to delete all files: ${response.status}`);
-        }
-
-        await fetchFiles();
-      } catch (error) {
-        console.error('Error deleting all files:', error);
-        alert('Error deleting all files. Please try again.');
-      }
-    }
-  };
-
   return (
-    <div className={styles.container}>
-      <Stack>
-        <Paper className={styles.top_paper} shadow="xs">
-          <Group justify={'center'}>
-            <FileUpload fetchFiles={fetchFiles} />
-            <RustlogImport />
-          </Group>
-        </Paper>
+    <Stack className={styles.mainStack}>
 
-        <Paper shadow="xs" className={styles.paper}>
-          <Group>
-            <Text size="lg" style={{ margin: '1rem' }}>
-              Uploaded Files ({files.length})
-            </Text>
-            <Button color="red" onClick={handleDeleteAll}>Delete All</Button>
-          </Group>
-          <FileTable
-            files={files}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-            onBulkDelete={() => { }}
-            onBulkPreprocess={() => { }}
-          />
-        </Paper>
-      </Stack>
-    </div>
+      <Paper className={styles.top_paper} shadow="xs">
+        <Group justify={'center'}>
+          <FileUpload fetchFiles={fetchFiles} />
+          <RustlogImport setTicketID={setTicketID} setIsPolling={setIsPolling} />
+        </Group>
+      </Paper>
+
+      <Paper shadow="xs" className={styles.paper}>
+        <Group>
+          <Text size="lg" style={{ margin: '1rem' }}>
+            Uploaded Files ({files.length})
+          </Text>
+        </Group>
+
+        <FileTable
+          files={files}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onBulkDelete={() => { }}
+          onBulkPreprocess={() => { }}
+          setTicketID={setTicketID}
+          setIsPolling={setIsPolling}
+        />
+      </Paper>
+
+    </Stack>
   );
 }

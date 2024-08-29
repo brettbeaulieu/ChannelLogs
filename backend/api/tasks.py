@@ -1,45 +1,86 @@
 from celery import shared_task
-import requests
-from .models import ChatFile, Emote, EmoteSet
-from .scripts.preprocess import preprocess_log  # Import your preprocessing function
+
+from .models import ChatFile, Task
+from .scripts import preprocess_log, import_rustlog, build_emote_set
+
 
 @shared_task
-def preprocess_task(row_id, file_path, format, use_sentiment, use_emotes, emote_set, filter_emotes, min_words):
-    # Perform preprocessing here
-    preprocess_log(row_id, file_path, format, use_sentiment, use_emotes, emote_set, filter_emotes, min_words)
+def preprocess_task(
+    ticket_id,
+    row_id,
+    file_path,
+    format,
+    use_sentiment,
+    use_emotes,
+    emote_set,
+    filter_emotes,
+    min_words,
+):
 
-    # Update the model
-    obj = ChatFile.objects.get(id=row_id)
-    obj.is_preprocessed = True
-    obj.save()
+    # Get task object, and set in progress
+    task = Task.objects.get(ticket=ticket_id)
+    task.status = "IN_PROGRESS"
+    task.save()
+
+    try:
+        # Perform preprocessing here
+        preprocess_log(
+            row_id,
+            file_path,
+            format,
+            use_sentiment,
+            use_emotes,
+            emote_set,
+            filter_emotes,
+            min_words,
+        )
+
+        # Update the model
+        obj = ChatFile.objects.get(id=row_id)
+        obj.is_preprocessed = True
+        obj.save()
+        task.status = "COMPLETED"
+
+    except Exception as e:
+        task.status = "FAILED"
+        task.result = str(e)
+
+    task.save()
+
 
 @shared_task
-def build_emote_set_task(set_id):
-    response = requests.get(f"http://7tv.io/v3/emote-sets/{set_id}")
-    if response.status_code != 200:
-        raise ConnectionError("Couldn't recover emote set, it may not exist.")
-    
-    data = response.json()
+def build_emote_set_task(set_id, ticket_id):
 
-    # Use a dictionary to store unique emotes by their emote_id
-    unique_emotes = {}
-    for emote_dict in data['emotes']:
-        emote_id = emote_dict['id']
-        # Store only the first occurrence of each emote_id
-        if emote_id not in unique_emotes:
-            unique_emotes[emote_id] = {
-                'name': emote_dict['name'],
-                'emote_id': emote_id
-            }
-    
-    # Convert dictionary values to a list
-    emotes_list = [Emote.objects.create(**emote_data) for emote_data in unique_emotes.values()]
+    # Get task object, and set in progress
+    task = Task.objects.get(ticket=ticket_id)
+    task.status = "IN_PROGRESS"
+    task.save()
 
-    emote_set_data = {
-        'name': data['name'],
-        'set_id': set_id,
-    }
-    # First create EmoteSet without emotes, then update the emotes list
-    obj = EmoteSet.objects.create(**emote_set_data)
-    obj.emotes.add(*emotes_list)
-    obj.save()
+    try:
+        build_emote_set(set_id)
+        task.status = "COMPLETED"
+
+    except Exception as e:
+        task.status = "FAILED"
+        task.result = str(e)
+
+    task.save()
+
+
+@shared_task
+def get_rustlog_task(
+    ticket_id, repo_name: str, channel_name: str, start_date: str, end_date: str
+):
+    # Get task object, and set in progress
+    task = Task.objects.get(ticket=ticket_id)
+    task.status = "IN_PROGRESS"
+    task.save()
+
+    try:
+        import_rustlog(repo_name, channel_name, start_date, end_date)
+        task.status = "COMPLETED"
+    except Exception as e:
+        task.status = "FAILED"
+        task.result = str(e)
+
+    task.save()

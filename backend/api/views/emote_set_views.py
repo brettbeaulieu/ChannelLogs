@@ -1,6 +1,6 @@
 from rest_framework import status, viewsets
 import requests
-from ..models import EmoteSet
+from ..models import EmoteSet, Task
 from ..serializers import EmoteSetSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -22,10 +22,37 @@ class EmoteSetViewSet(viewsets.ModelViewSet):
                 {"error": "ID validation failed"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        build_emote_set_task.delay(id)
+        # Create a new task
+        task = Task.objects.create(status="PENDING")
+
+        build_emote_set_task.delay(id, task.ticket)
 
         return Response(
-            {"message": "Successfully enqueued emote set creation"},
+            {
+                "message": "Successfully enqueued emote set creation",
+                "ticket": str(task.ticket),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["get"])
+    def status(self, request, *args, **kwargs):
+        ticket = request.query_params.get("ticket", None)
+        if not ticket:
+            return Response(
+                {"error": "Ticket parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            task = Task.objects.get(ticket=ticket)
+        except Task.DoesNotExist:
+            return Response(
+                {"error": "Invalid ticket"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(
+            {"status": task.status, "result": task.result},
             status=status.HTTP_200_OK,
         )
 

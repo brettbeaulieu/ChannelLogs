@@ -1,6 +1,6 @@
+import uuid
 from django.db import models
 import os
-
 
 
 # Create your models here.
@@ -59,20 +59,30 @@ class Message(models.Model):
             user.delete()
 
 
-class Emote(models.Model):
-    name = models.TextField(blank=False)
-    emote_id = models.TextField(blank=False)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["name", "emote_id"], name="unique_emote")
-        ]
-
-
 class EmoteSet(models.Model):
     name = models.TextField(blank=False)
     set_id = models.TextField(blank=False, unique=True)
-    emotes = models.ManyToManyField(Emote, blank=True, related_name="emote_sets")
+
+
+class Emote(models.Model):
+    parent_set = models.ForeignKey(EmoteSet, on_delete=models.CASCADE)
+    name = models.TextField(blank=False)
+    emote_id = models.TextField(blank=False)
+
+
+class Task(models.Model):
+    TICKET_STATUSES = [
+        ("PENDING", "Pending"),
+        ("IN_PROGRESS", "In Progress"),
+        ("COMPLETED", "Completed"),
+        ("FAILED", "Failed"),
+    ]
+
+    ticket = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    status = models.CharField(max_length=20, choices=TICKET_STATUSES, default="PENDING")
+    result = models.TextField(
+        null=True, blank=True
+    )  # Store result or error message here
 
 
 # TODO: Emote culling

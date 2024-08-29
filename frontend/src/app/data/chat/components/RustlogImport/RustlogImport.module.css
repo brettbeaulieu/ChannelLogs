@@ -1,17 +1,19 @@
 .centered_header {
     font-weight: 300;
-    font-size: x-large;
+    font-size: large;
     text-align: center;
 }
 
 .inner_paper_stack {
-    height: max-content;
+    height: 100%;
 }
 
 .inner_paper {
+    display: flex;
+    justify-content: center;
     margin: var(--mantine-spacing-md);
     padding: var(--mantine-spacing-md);
-
-    width: 45%;
-    border-radius: var(--mantine-radius-md);
+    min-width: 50%;
+    height: 15vh;
+    border-radius: 0;
 }

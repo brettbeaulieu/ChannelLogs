@@ -4,6 +4,8 @@ import { useState } from "react";
 import styles from './PreprocessModal.module.css';
 import { useDisclosure } from "@mantine/hooks";
 import { IconScanEye } from "@tabler/icons-react";
+import { notifications } from '@mantine/notifications';
+
 
 export interface EmoteSetData {
     id: number;
@@ -14,11 +16,13 @@ export interface EmoteSetData {
 
 export interface PreprocessModalProps {
     parent_ids: Set<string>;
+    setTicketID: any;
+    setIsPolling: any;
 }
 
 
 
-export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProps) {
+export function PreprocessModal({ parent_ids: _parent_ids, setTicketID, setIsPolling }: PreprocessModalProps) {
     const [useEmotes, setUseEmotes] = useState<boolean | undefined>(false);
     const [useSentiment, setUseSentiment] = useState<boolean | undefined>(false);
     const [filterEmotes, setFilterEmotes] = useState<boolean | undefined>(false);
@@ -29,8 +33,6 @@ export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProp
     const [emoteSets, setEmoteSets] = useState<EmoteSetData[]>([]);
     const [opened, { open, close }] = useDisclosure(false);
     const parent_ids = _parent_ids;
-
-    console.log(`Parent IDs: ${Array.from(parent_ids)}`);
 
     const getEmoteSets = async () => {
         const response = await getData('chat/emotesets');
@@ -62,7 +64,16 @@ export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProp
         formData.append('filterEmotes', String(useEmotes && filterEmotes));
         formData.append('minWords', minWords.toString());
 
-        await postData(`chat/files/preprocess/`, formData);
+        const response = await postData(`chat/files/preprocess/`, formData);
+        if (response.status == 200) {
+            const data = await response.json();
+            setTicketID(data.ticket)
+            setIsPolling(true);
+            notifications.show({
+                title: 'Emote Set Task Sent',
+                message: `Ticket: ${data.ticket}`,
+            })
+        }
     }
 
     const combobox_options = emoteSets.map((item) => (
@@ -98,7 +109,7 @@ export function PreprocessModal({ parent_ids: _parent_ids }: PreprocessModalProp
                                         <Stack>
                                             <Checkbox label={"Use Sentiment Analysis"} checked={useSentiment}
                                                 onChange={(event) => setUseSentiment(event.currentTarget.checked)} />
-                                            <NumberInput label="Minimum Words" disabled={!useSentiment} value={minWords} onChange={setMinWords} /> 
+                                            <NumberInput label="Minimum Words" disabled={!useSentiment} value={minWords} onChange={setMinWords} />
 
                                             <Checkbox label={"Use 7TV Emotes"} checked={useEmotes}
                                                 onChange={(event) => setUseEmotes(event.currentTarget.checked)} />

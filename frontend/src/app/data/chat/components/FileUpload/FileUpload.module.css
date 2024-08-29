@@ -1,25 +1,40 @@
 .centered_header {
-  margin: var(--mantine-spacing-md);
   font-weight: 300;
-  padding-top: var(--mantine-spacing-md);
-  font-size: x-large;
+  font-size: large;
   text-align: center;
 }
 
 
+.button {
+  width: 100%;
+}
+
 .inner_paper {
+  display: flex;
   margin: var(--mantine-spacing-md);
   padding: var(--mantine-spacing-md);
+  width: 25%;
+  height: 15vh;
+  border-radius: 0;
+}
 
-  width: 45%;
-  border-radius: var(--mantine-radius-md);
+.inner_paper_stack {
+  width: 100%;
+  height: 100%;
+}
+
+.inner_paper_stack2 {
+  width: 100%;
+  height: 100%;
+  flex: 1;
 }
 
 .file_upload {
-  width: 100%;
   background-color: var(--mantine-color-gray-light);
+  min-height: 7vh;
+  flex: 1;
+
   color: var(--mantine-color-text);
-  min-height: 200px;
   border-radius: var(--mantine-radius-lg);
   display: flex;
   justify-content: center;

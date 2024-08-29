@@ -76,9 +76,10 @@ class DateTimeSerializer(serializers.Serializer):
 class EmoteSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmoteSet
-        fields = ["id", "name", "set_id", "emotes"]
+        fields = ["id", "name", "set_id"]
+
 
 class EmoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Emote
-        fields = ["id", "name", "emote_id"]
+        fields = ["id", "parent_set", "name", "emote_id"]

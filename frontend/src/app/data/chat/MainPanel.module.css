@@ -1,18 +1,17 @@
-.main {
+.mainStack {}
+
+.top_paper {}
+
+.top_group {
   display: flex;
-  flex-direction: row;
-  justify-content: baseline;
-  height: 100%;
-  width: 100%;
+  align-items: stretch;
 }
 
-.top_paper, .paper {
+.paper {}
+
+
+.top_paper,
+.paper {
   background-color: var(--mantine-color-default);
   border-radius: 0;
 }
-
-
-.container {
-}
-
-
