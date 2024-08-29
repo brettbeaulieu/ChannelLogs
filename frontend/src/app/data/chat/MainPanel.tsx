@@ -75,28 +75,8 @@ export default function MainPanel() {
     fetchFiles();
   }, [fetchFiles]);
 
-  const handleDelete = async (fileId: string, fileName: string) => {
-    try {
-      await deleteData(`chat/files/${fileId}/`);
-      await fetchFiles();
-    } catch (error) {
-      console.error(`Error deleting file ${fileId}:`, error);
-    }
-  };
 
-  const handleEdit = async (fileId: string, newFileName: string) => {
-    try {
-      const formData = new FormData();
-      formData.append('filename', newFileName);
-      const response = await patchData(`chat/files/${fileId}/`, formData);
-      if (!response.ok) {
-        throw new Error(`Failed to edit file ${fileId}: ${response.status}`);
-      }
-      await fetchFiles();
-    } catch (error) {
-      console.error(`Error editing file ${fileId}:`, error);
-    }
-  }
+
 
   return (
     <Stack className={styles.mainStack}>
@@ -117,10 +97,7 @@ export default function MainPanel() {
 
         <FileTable
           files={files}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          onBulkDelete={() => { }}
-          onBulkPreprocess={() => { }}
+          fetchFiles={fetchFiles}
           setTicketID={setTicketID}
           setIsPolling={setIsPolling}
         />

@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ..common import GRANULARITY
-from ..models import Message, Emote
+from ..models import Message, Emote, MessageEmote
 from ..serializers import DateTimeSerializer, MessageSerializer
 
 
@@ -17,6 +17,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def message_count_aggregate(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         granularity = request.query_params.get("granularity", "day")  # Default to 'day'
@@ -49,7 +50,9 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate message counts based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
+            Message.objects.filter(
+                timestamp__range=[start_date, end_date], parent_log__channel=channel
+            )
             .annotate(period=truncate_func("timestamp"))
             .values("period")
             .annotate(total_messages=Count("id"))
@@ -69,6 +72,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def message_count_cumulative(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         granularity = request.query_params.get("granularity", "day")  # Default to 'day'
@@ -101,7 +105,9 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate message counts based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
+            Message.objects.filter(
+                timestamp__range=[start_date, end_date], parent_log__channel=channel
+            )
             .annotate(period=truncate_func("timestamp"))
             .values("period")
             .annotate(total_messages=Count("id"))
@@ -124,6 +130,8 @@ class MessageViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def get_earliest_date(self, request, *args, **kwargs):
         # Get the earliest message's date
+        channel = request.query_params.get("channel")
+
         earliest_date = Message.objects.aggregate(earliest_date=Min("timestamp"))[
             "earliest_date"
         ]
@@ -138,6 +146,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def message_count(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
 
@@ -163,13 +172,14 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Filter messages within the given date range
         message_count = Message.objects.filter(
-            timestamp__range=[start_date, end_date]
+            timestamp__range=[start_date, end_date], parent_log__channel=channel
         ).count()
 
         return Response({"value": message_count}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])
     def unique_users(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
 
@@ -195,7 +205,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Find the number of distinct users who sent messages within the given date range
         unique_users = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
+            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
             .values("user")
             .distinct()
             .aggregate(count=Count("user"))["count"]
@@ -205,6 +215,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def unique_users_aggregate(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         granularity = request.query_params.get("granularity", "day")  # Default to 'day'
@@ -237,7 +248,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate unique users based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
+            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
             .annotate(period=truncate_func("timestamp"))
             .values("period")
             .annotate(unique_users=Count("user", distinct=True))  # Count unique users
@@ -257,12 +268,10 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def sentiment_aggregate(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         granularity = request.query_params.get("granularity", "day")  # Default to 'day'
-        period = int(
-            request.query_params.get("period", 1)
-        )  # Default period if not provided
 
         # Handle default date values
         if not start_date_str:
@@ -292,10 +301,10 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate message counts based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
+            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
             .annotate(period=truncate_func("timestamp"))
             .values("period")
-            .annotate(toxic=Avg("sentiment_score"))
+            .annotate(senti=Avg("sentiment_score"))
             .order_by("period")
         )
 
@@ -303,17 +312,18 @@ class MessageViewSet(viewsets.ModelViewSet):
         formatted_data = [
             {
                 "date": entry["period"].isoformat(),
-                "value": entry["toxic"],
+                "value": entry["senti"],
             }
             for entry in aggregated_data
         ]
 
-        moving_avg_data = calculate_moving_average(formatted_data, period)
+        moving_avg_data = normalize(formatted_data)
 
         return Response(moving_avg_data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])
     def sentiment_cumulative_aggregate(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         granularity = request.query_params.get("granularity", "day")  # Default to 'day'
@@ -349,7 +359,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate message counts based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
+            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
             .annotate(period=truncate_func("timestamp"))
             .values("period")
             .annotate(toxic=Sum("sentiment_score"))
@@ -372,6 +382,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def sentiment_pie(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         # Handle default date values
@@ -391,7 +402,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             )
         # Aggregate positive, neutral, and negative scores.
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date])
+            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
             .values("sentiment_score")
             .annotate(count=Count("sentiment_score"))
             .order_by("sentiment_score")
@@ -413,6 +424,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def popular_emotes(self, request):
+        channel = request.query_params.get("channel")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
         # Handle default date values
@@ -431,8 +443,8 @@ class MessageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Query to sum values for each distinct key in 'emotes'
-        response_data = get_emote_sums(start_date, end_date)
+        # Query to sum values for each distinct key in 'emotes', and normalize to average at 0.
+        response_data = get_emote_sums(channel, start_date, end_date)
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -482,46 +494,29 @@ def calculate_running_sum(data):
 
     return result
 
+def normalize(data):
+    """ Normalize data as returned from calculate_running_sum """
+    values = [x["value"] for x in data]
+    average = sum(values)/len(values)
+    return [{"date": entry["date"], "value": entry["value"]-average} for entry in data]
 
-def get_emote_sums(start_date, end_date):
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            WITH json_data AS (
-                SELECT
-                    key AS emote_key,
-                    value AS emote_value
-                FROM api_message
-                CROSS JOIN LATERAL jsonb_each_text(emotes) AS emote_entry(key, value)
-                WHERE
-                    timestamp BETWEEN %s AND %s
-            ),
-            emote_sums AS (
-                SELECT
-                    emote_key,
-                    SUM(CAST(emote_value AS INTEGER)) AS total_sum
-                FROM json_data
-                GROUP BY
-                    emote_key
-            )
-            SELECT
-                emote_key,
-                total_sum
-            FROM emote_sums
-            ORDER BY
-                total_sum 
-            DESC;
-            """,
-            [start_date, end_date],
-        )
-        # Fetch all results
-        results = cursor.fetchall()
-        results = get_emote_ids(results)
-    return results
 
-def get_emote_ids(emote_counts: list[tuple[str,int]]):
-    new_list = []
-    for x in emote_counts:
-        obj = Emote.objects.get(name=x[0])
-        new_list.append({"id": obj.emote_id, "name": x[0], "value": x[1]})
-    return new_list
+
+
+def get_emote_sums(channel, start_date, end_date):
+    # Filter messages between the two timestamps
+    messages = Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
+
+    # Get the emote occurrences in these messages
+    emote_occurrences = (
+        MessageEmote.objects.filter(message__in=messages)
+        .values("emote__emote_id","emote__name")
+        .annotate(total_count=Sum("count"))
+        .order_by("emote__name")
+    )
+
+    # Convert the result to a dictionary for easier usage
+    emote_count_by_name = [
+        {"id": item["emote__emote_id"], "name": item["emote__name"], "value": item["total_count"]} for item in emote_occurrences
+    ]
+    return sorted(emote_count_by_name, key=lambda x: x["value"], reverse=True)

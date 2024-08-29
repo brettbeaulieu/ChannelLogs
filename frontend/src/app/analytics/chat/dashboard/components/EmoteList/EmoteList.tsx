@@ -1,5 +1,5 @@
 import { getData } from "@/api/apiHelpers";
-import { Paper, Table, Image, Skeleton } from "@mantine/core";
+import { Paper, Table, Image, Skeleton, Text } from "@mantine/core";
 import { ReactElement, useCallback, useEffect, useState } from "react";
 import styles from './EmoteList.module.css';
 
@@ -12,6 +12,7 @@ interface Element {
 }
 
 interface EmoteListProps {
+    channel: string;
     dateRange: [Date | null, Date | null];
 }
 
@@ -19,7 +20,7 @@ const formatDate = (date: Date | null): string | null => {
     return date ? date.toISOString().split('T')[0] : null;
 };
 
-export function EmoteList({ dateRange }: EmoteListProps) {
+export function EmoteList({ channel, dateRange }: EmoteListProps) {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [rows, setRows] = useState<ReactElement[]>([]);
 
@@ -27,8 +28,8 @@ export function EmoteList({ dateRange }: EmoteListProps) {
         const image_link = api_string + element.id + "/4x.webp";
         return (
             <Table.Tr key={element.name}>
-                <Table.Td>{idx + 1}</Table.Td>
-                <Table.Td>{<Image alt={element.name} src={image_link} h={48} w={48} radius={"md"} />}</Table.Td>
+                <Table.Td>{<Text fw={400} ta={"center"} size={"xl"}>{idx + 1}</Text>}</Table.Td>
+                <Table.Td align={"center"}>{<Image alt={element.name} src={image_link} h={48} w={48} radius={"md"} />}</Table.Td>
                 <Table.Td>{element.name}</Table.Td>
                 <Table.Td>{element.value}</Table.Td>
             </Table.Tr>
@@ -50,20 +51,27 @@ export function EmoteList({ dateRange }: EmoteListProps) {
                 setIsLoading(false);
                 return;
             }
-            const response = await getData('chat/messages/popular_emotes', { start_date: startDate, end_date: endDate });
+            const response = await getData('chat/messages/popular_emotes', { channel: channel, start_date: startDate, end_date: endDate });
             const data: Element[] = await response.json();
+            console.log(data);
             const temp_rows: ReactElement[] = buildItems(data);
             setRows(temp_rows);
             setIsLoading(false);
         }
         fetchData();
-    }, [dateRange, buildItems])
+    }, [dateRange, buildItems, channel])
 
     return (
         <Paper withBorder className={styles.rootPaper}>
             <Skeleton visible={isLoading} className={styles.skeleton}>
                 <Table.ScrollContainer minWidth={200} type="scrollarea" className={styles.scrollContainer}>
                     <Table classNames={{ tbody: styles.table }}>
+                        <Table.Tr>
+                            <Table.Th ta={"center"}>Rank</Table.Th>
+                            <Table.Th ta={"center"}>Image</Table.Th>
+                            <Table.Th>Emote Name</Table.Th>
+                            <Table.Th>Count</Table.Th>
+                        </Table.Tr>
                         <Table.Tbody>{rows}</Table.Tbody>
                     </Table>
                 </Table.ScrollContainer>

@@ -1,11 +1,15 @@
-import React from 'react';
-import { Checkbox, Group, NumberInput, Paper, SegmentedControl, Stack, Text } from '@mantine/core';
+import React, { useEffect, useState } from 'react';
+import { Checkbox, Group, NumberInput, Paper, SegmentedControl, Select, Stack, Text } from '@mantine/core';
 import styles from './ParametersGroup.module.css';
 import { DateMenu } from '@/components';
+import { getData } from '@/api/apiHelpers';
 
 type SetStateAction<T> = React.Dispatch<React.SetStateAction<T>>;
 
 interface ParametersGroupProps {
+    channel: string | null;
+    setChannel: SetStateAction<string | null>;
+
     granularity: string | undefined;
     setGranularity: SetStateAction<string | undefined>;
 
@@ -22,7 +26,10 @@ interface ParametersGroupProps {
     setDateRange: SetStateAction<[Date | null, Date | null]>;
 }
 
+
 export function ParametersGroup({
+    channel,
+    setChannel,
     granularity,
     setGranularity,
     chartStyle,
@@ -34,9 +41,42 @@ export function ParametersGroup({
     dateRange,
     setDateRange
 }: ParametersGroupProps) {
+    
+
+    const [channelList, setChannelList] = useState<string[]>([]);
+    
+    // Fetch channel list when component mounts
+    useEffect(() => {
+        async function fetchChannelList() {
+            try {
+                const response = await getData('chat/files/get_all_channels');
+                const data = await response.json();
+                setChannelList(data.names);
+            } catch (error) {
+                console.error('Failed to fetch channel list', error);
+            }
+        }
+
+        fetchChannelList();
+    }, []); // Empty dependency array means this runs only once
+    
+
+
     return (
-        <Paper shadow="xs" className={styles.paramsPaper}>
+        <Paper className={styles.paramsPaper}>
             <Group className={styles.paramsGroup}>
+                <Stack>
+                    <Text ta="center">Channel</Text>
+                    <Select
+                        data={channelList}
+                        value={channel}
+                        onChange={setChannel}
+                        searchable 
+                    />
+
+                </Stack>
+
+
                 <Stack>
                     <Text ta="center">Date Range</Text>
                     <DateMenu

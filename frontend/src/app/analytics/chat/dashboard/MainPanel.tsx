@@ -16,6 +16,7 @@ export default function MainPanel() {
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
+  const [channel, setChannel] = useState<string | null>('');
   const [chartStyle, setChartStyle] = useState<string>("Area");
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([yesterday, today]);
   const [granularity, setGranularity] = useState<string | undefined>('Day');
@@ -41,6 +42,8 @@ export default function MainPanel() {
         <Stack className={styles.mainStack}>
 
           <ParametersGroup
+            channel={channel}
+            setChannel={setChannel}
             granularity={granularity}
             setGranularity={setGranularity}
             chartStyle={chartStyle}
@@ -56,21 +59,23 @@ export default function MainPanel() {
           <Group className={styles.mainGroup}>
 
             <Stack className={styles.mainstack1} justify='flex-start'>
-              <StatsGrid dateRange={dateRange} />
+              <StatsGrid channel={channel} dateRange={dateRange} />
               <InteractiveAreaChart
+                dateRange={dateRange}
                 fetchURL={'chat/messages/message_count_aggregate'}
+                channel={channel ? channel : ''}
+                dataKey={"date"}
+                series={[{ label: "Messages", name: 'value', color: 'bright' }]}
                 useMA={useMA}
                 maPeriod={maPeriod}
                 granularity={granularity}
-                dateRange={dateRange}
-                series={[{ label: "Messages", name: 'value', color: 'bright' }]}
-                dataKey={"date"}
                 unit={' Msgs'}
                 style={chartStyle}
                 title={"Messages"}
               />
               <InteractiveAreaChart
                 fetchURL={'chat/messages/unique_users_aggregate'}
+                channel={channel ? channel : ''}
                 useMA={useMA}
                 maPeriod={maPeriod}
                 granularity={granularity}
@@ -86,6 +91,7 @@ export default function MainPanel() {
             <Stack className={styles.mainstack2} justify='flex-start'>
               <InteractiveAreaChart
                 fetchURL={'chat/messages/sentiment_aggregate'}
+                channel={channel ? channel : ''}
                 useMA={useMA}
                 maPeriod={maPeriod}
                 granularity={granularity}
@@ -97,7 +103,7 @@ export default function MainPanel() {
                 title={"Sentiment"}
                 yAxisRange={[-1, 1]}
               />
-              <EmoteList dateRange={dateRange}/>
+              <EmoteList channel={channel ? channel : ''} dateRange={dateRange} />
             </Stack >
 
           </Group>

@@ -44,6 +44,7 @@ def import_rustlog(repo_name: str, channel_name: str, start_date: str, end_date:
                 chat_file = ChatFile(
                     file=File(file, name=os.path.basename(file_path)),
                     filename=f"{channel_name}/{date}.log",
+                    channel=channel_name,
                     is_preprocessed=False,
                     metadata=None,
                 )

@@ -35,27 +35,6 @@ class EmoteSetViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["get"])
-    def status(self, request, *args, **kwargs):
-        ticket = request.query_params.get("ticket", None)
-        if not ticket:
-            return Response(
-                {"error": "Ticket parameter is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            task = Task.objects.get(ticket=ticket)
-        except Task.DoesNotExist:
-            return Response(
-                {"error": "Invalid ticket"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        return Response(
-            {"status": task.status, "result": task.result},
-            status=status.HTTP_200_OK,
-        )
-
     @action(detail=False, methods=["delete"])
     def delete_all(self, request, *args, **kwargs):
         """

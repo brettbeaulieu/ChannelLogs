@@ -2,7 +2,7 @@ import re
 from collections import Counter
 from transformers import pipeline
 
-from ..models import ChatFile, Emote, User, Message
+from ..models import ChatFile, Emote, EmoteSet, MessageEmote, User, Message
 
 # Constants
 CREATE_PREFIX = "bulk_create/"
@@ -140,6 +140,9 @@ def preprocess_log(
     # Get emote set, if emotes anbled
     if useEmotes:
         emoteList = get_emote_list(emoteSetName)
+        emote_names = [x.name for x in emoteList]
+    else:
+        emote_names = []
 
     # Get log lines
     extract_info = extract_info_rustlog
@@ -147,10 +150,7 @@ def preprocess_log(
         extract_info = extract_info_chatterino
 
     # Extract info from lines
-    if useEmotes:
-        form_data_list = extract_info(log_path, [x.name for x in emoteList])
-    else:
-        form_data_list = extract_info(log_path)
+    form_data_list = extract_info(log_path, emote_names)
 
     # Find new users
     users_set = set([user.username for user in User.objects.all()])
@@ -210,6 +210,7 @@ def preprocess_log(
     # Prepare messages in bulk
     parent_log = ChatFile.objects.get(id=parent_id)
     messages_to_create = []
+    message_emotes_to_create = []
 
     for user_data in form_data_list:
         # Extract user and remove it from the data dictionary
@@ -217,8 +218,17 @@ def preprocess_log(
         message_data = {key: value for key, value in user_data.items() if key != "user"}
 
         # Create a Message instance with the remaining data
-        message = Message(parent_log=parent_log, user=user, **message_data)
+        message = Message(parent_log=parent_log, user=user, timestamp=message_data["timestamp"], message=message_data["message"], sentiment_score=message_data["sentiment_score"])
         messages_to_create.append(message)
 
+        emotes = user_data.get("emotes", {})
+        for emote_name, count in emotes.items():
+            emote_obj = Emote.objects.get(name=emote_name, parent_set=EmoteSet.objects.get(name=emoteSetName))
+            message_emotes_to_create.append(MessageEmote(
+                message=message,
+                emote=emote_obj,
+                count=count
+            ))
     # Insert messages in bulk
     Message.objects.bulk_create(messages_to_create)
+    MessageEmote.objects.bulk_create(message_emotes_to_create)

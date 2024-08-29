@@ -31,6 +31,7 @@ class ChatFileViewSet(viewsets.ModelViewSet):
             chat_log_data = {
                 "file": file,
                 "filename": request.data.get("filename", file.name.split("/")[-1]),
+                "channel": "None",
                 "is_preprocessed": request.data.get("is_preprocessed", False),
                 "metadata": request.data.get("metadata", None),
             }
@@ -198,3 +199,8 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
         # Return the JSON data or an empty dictionary if no data
         return Response({"data": data})
+
+    @action(detail=False, methods=["get"])
+    def get_all_channels(self, request, *args, **kwargs):
+        objects = ChatFile.objects.all()
+        return Response({"names": [x["channel"] for x in objects.values()]}, status=status.HTTP_200_OK)

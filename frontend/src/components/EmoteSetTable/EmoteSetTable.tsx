@@ -86,17 +86,15 @@ export function EmoteSetTable({ emoteSets, onDelete, onEdit }: EmoteSetTableProp
     ));
 
     return (
-        <Box style={{ position: 'relative' }}>
-            <Table className={styles.table}>
-                <Table.Thead className={styles.thead}>
-                    <Table.Tr className={styles.tr}>
-                        <Table.Th className={styles.fileHeader}>Name</Table.Th>
-                        <Table.Th className={styles.fileHeader}>ID</Table.Th>
-                        <Table.Th className={styles.fileHeader}>Actions</Table.Th>
-                    </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
-            </Table>
-        </Box>
+        <Table className={styles.table}>
+            <Table.Thead className={styles.thead}>
+                <Table.Tr className={styles.tr}>
+                    <Table.Th className={styles.fileHeader}>Name</Table.Th>
+                    <Table.Th className={styles.fileHeader}>ID</Table.Th>
+                    <Table.Th className={styles.fileHeader}>Actions</Table.Th>
+                </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
+        </Table>
     );
 }

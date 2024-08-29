@@ -2,7 +2,7 @@ import cx from 'clsx';
 import { Table, Button, TextInput, Group, Tooltip, Box, Drawer, Text, Checkbox, Modal } from '@mantine/core';
 import { IconPencil, IconTrash, IconCircleCheck, IconCircleX, IconScanEye } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
-import { parseFormatDateTime } from '@/api/apiHelpers';
+import { deleteData, parseFormatDateTime, patchData } from '@/api/apiHelpers';
 import styles from './FileTable.module.css';
 import { useDisclosure } from '@mantine/hooks';
 import { PreprocessModal } from './components';
@@ -13,6 +13,7 @@ export interface FileData {
   id: string;
   file: string;
   filename: string;
+  channel: string;
   is_preprocessed: boolean;
   uploaded_at: string;
   metadata: Record<string, any>;
@@ -20,49 +21,104 @@ export interface FileData {
 
 interface FileTableProps {
   files: FileData[];
-  onDelete: (fileId: string, fileName: string) => void;
-  onEdit: (fileId: string, newFileName: string) => void;
-  onBulkPreprocess: (fileIds: string[]) => void;
-  onBulkDelete: (fileIds: string[]) => void;
+  fetchFiles: any;
   setTicketID: any;
   setIsPolling: any;
 }
 
-export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDelete, setTicketID, setIsPolling }: FileTableProps) {
+export function FileTable({ files, fetchFiles, setTicketID, setIsPolling }: FileTableProps) {
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
-  const [newFileName, setNewFileName] = useState<string>('');
+  const [editingChannelFileID, setEditingChannelFileID] = useState<string | null>(null);
+  const [newFileName, setNewFilename] = useState<string>('');
+  const [newChannel, setNewChannel] = useState<string>('');
   const [drawerOpened, setDrawerOpened] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     filename: true,
     is_preprocessed: true,
+    channel: true,
     uploaded_at: true,
     metadata: true,
     actions: true,
   });
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
 
+  const handleEdit = async (fileId: string, newFileName: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('filename', newFileName);
+      const response = await patchData(`chat/files/${fileId}/`, formData);
+      if (!response.ok) {
+        throw new Error(`Failed to edit file ${fileId}: ${response.status}`);
+      }
+      await fetchFiles();
+    } catch (error) {
+      console.error(`Error editing file ${fileId}:`, error);
+    }
+  }
+
+
   useEffect(() => {
     setDrawerOpened(selectedFiles.size > 0);
   }, [selectedFiles]);
 
 
-  const handleEditClick = (fileId: string, filename: string) => {
+  const handleEditFilenameClick = (fileId: string, filename: string) => {
     setEditingFileId(fileId);
-    setNewFileName(filename);
+    setNewFilename(filename);
   };
 
+  const handleEditChannelClick = (fileId: string, name: string) => {
+    setEditingChannelFileID(fileId);
+    setNewChannel(name);
+  }
 
-  const handleSave = (fileId: string) => {
+
+  const handleSaveFilename = async (fileId: string) => {
     if (newFileName && newFileName !== files.find(file => file.id === fileId)?.filename) {
-      onEdit(fileId, newFileName);
+      try {
+        const formData = new FormData();
+        formData.append('filename', newFileName);
+        const response = await patchData(`chat/files/${fileId}/`, formData);
+        if (!response.ok) {
+          throw new Error(`Failed to edit file ${fileId}: ${response.status}`);
+        }
+        await fetchFiles();
+      } catch (error) {
+        console.error(`Error editing file ${fileId}:`, error);
+      }
     }
     setEditingFileId(null);
-    setNewFileName('');
+    setNewFilename('');
   };
 
-  const handleCancel = () => {
+  const handleSaveChannel = async (fileId: string) => {
+    if (newChannel) {
+      try {
+        const formData = new FormData();
+        formData.append('channel', newChannel);
+        const response = await patchData(`chat/files/${fileId}/`, formData);
+        if (!response.ok) {
+          throw new Error(`Failed to edit file ${fileId}: ${response.status}`);
+        }
+        await fetchFiles();
+      } catch (error) {
+        console.error(`Error editing file ${fileId}:`, error);
+      }
+    }
+    setEditingChannelFileID(null);
+    setNewFilename('');
+  };
+
+
+
+  const handleCancelFilename = () => {
     setEditingFileId(null);
-    setNewFileName('');
+    setNewFilename('');
+  };
+
+  const handleCancelChannel = () => {
+    setEditingChannelFileID(null);
+    setNewFilename('');
   };
 
   const handleColumnVisibilityChange = (column: string, isVisible: boolean) => {
@@ -85,12 +141,21 @@ export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDel
   };
 
   const handleBulkPreprocess = () => {
-    onBulkPreprocess(Array.from(selectedFiles));
+    //onBulkPreprocess(Array.from(selectedFiles));
     setSelectedFiles(new Set());
   };
 
+  const handleDelete = async (fileId: string, fileName: string) => {
+    try {
+      await deleteData(`chat/files/${fileId}/`);
+      await fetchFiles();
+    } catch (error) {
+      console.error(`Error deleting file ${fileId}:`, error);
+    }
+  };
+
   const handleBulkDelete = () => {
-    onBulkDelete(Array.from(selectedFiles));
+    //onBulkDelete(Array.from(selectedFiles));
     setSelectedFiles(new Set());
   };
 
@@ -115,15 +180,15 @@ export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDel
             <Group align="center">
               <TextInput
                 value={newFileName}
-                onChange={(e) => setNewFileName(e.target.value)}
-                onBlur={() => handleSave(file.id)}
+                onChange={(e) => setNewFilename(e.target.value)}
+                onBlur={() => handleCancelFilename}
                 autoFocus
                 style={{ marginRight: 8 }}
               />
-              <Button onClick={() => handleSave(file.id)} color="green" size="xs">
+              <Button onClick={() => handleSaveFilename(file.id)} color="green" size="xs">
                 Save
               </Button>
-              <Button onClick={handleCancel} color="gray" size="xs">
+              <Button onClick={handleCancelFilename} color="gray" size="xs">
                 Cancel
               </Button>
             </Group>
@@ -131,7 +196,37 @@ export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDel
             <Group align="center">
               <span>{file.filename}</span>
               <Tooltip label="Edit Name">
-                <Button color="gray" onClick={() => handleEditClick(file.id, file.filename)} variant="subtle" size="xs">
+                <Button color="gray" onClick={() => handleEditFilenameClick(file.id, file.filename)} variant="subtle" size="xs">
+                  <IconPencil size={16} />
+                </Button>
+              </Tooltip>
+            </Group>
+          )}
+        </Table.Td>
+      )}
+      {visibleColumns.channel && (
+        <Table.Td className={styles.propCell}>
+          {editingChannelFileID ? (
+            <Group align="center">
+              <TextInput
+                value={newChannel}
+                onChange={(e) => setNewChannel(e.target.value)}
+                onBlur={() => handleCancelChannel}
+                autoFocus
+                style={{ marginRight: 8 }}
+              />
+              <Button onClick={() => handleSaveChannel(file.id)} color="green" size="xs">
+                Save
+              </Button>
+              <Button onClick={handleCancelChannel} color="gray" size="xs">
+                Cancel
+              </Button>
+            </Group>
+          ) : (
+            <Group align="center">
+              <span>{file.channel}</span>
+              <Tooltip label="Edit Name">
+                <Button color="gray" onClick={() => handleEditChannelClick(file.id, file.channel)} variant="subtle" size="xs">
                   <IconPencil size={16} />
                 </Button>
               </Tooltip>
@@ -161,7 +256,7 @@ export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDel
               <PreprocessModal parent_ids={new Set<string>([file.id])} setTicketID={setTicketID} setIsPolling={setIsPolling} />
             )}
             <Tooltip label="Delete File">
-              <Button color="red" onClick={() => onDelete(file.id, file.filename)} variant="subtle" size="xs">
+              <Button color="red" onClick={() => handleDelete(file.id, file.filename)} variant="subtle" size="xs">
                 <IconTrash size={20} />
               </Button>
             </Tooltip>
@@ -186,6 +281,7 @@ export function FileTable({ files, onDelete, onEdit, onBulkPreprocess, onBulkDel
                 indeterminate={selectedFiles.size > 0 && selectedFiles.size !== files.length}
               /></Table.Th>}
             {visibleColumns.filename && <Table.Th className={styles.fileHeader}>File Name</Table.Th>}
+            {visibleColumns.channel && <Table.Th className={styles.fileHeader}>Channel</Table.Th>}
             {visibleColumns.is_preprocessed && <Table.Th className={styles.actionHeader}>Preprocessed</Table.Th>}
             {visibleColumns.uploaded_at && <Table.Th className={styles.actionHeader}>Upload Date</Table.Th>}
             {visibleColumns.metadata && <Table.Th className={styles.actionHeader}>Metadata</Table.Th>}

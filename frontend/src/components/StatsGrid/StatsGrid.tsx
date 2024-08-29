@@ -10,11 +10,12 @@ export interface DataStruct {
 }
 
 export interface StatsGridProps {
+    channel: string | null;
     dateRange: [Date | null, Date | null];
 }
 
 
-export function StatsGrid({ dateRange }: StatsGridProps) {
+export function StatsGrid({ channel, dateRange }: StatsGridProps) {
     const [grids, setGrids] = useState<ReactElement[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [data, setData] = useState<{ user: DataStruct; messages: DataStruct } | null>(null);
@@ -42,7 +43,7 @@ export function StatsGrid({ dateRange }: StatsGridProps) {
 
     const fetchUserData = useCallback(async (startDate: string, endDate: string) => {
         try {
-            const response = await getData('chat/messages/unique_users', { start_date: startDate, end_date: endDate });
+            const response = await getData('chat/messages/unique_users', { channel: channel, start_date: startDate, end_date: endDate });
             const data = await response.json();
             // Assuming the data is { value: x }
             return {
@@ -56,11 +57,11 @@ export function StatsGrid({ dateRange }: StatsGridProps) {
                 value: 0,
             };
         }
-    }, []);
+    }, [channel]);
 
     const fetchMessageData = useCallback(async (startDate: string, endDate: string) => {
         try {
-            const response = await getData('chat/messages/message_count', { start_date: startDate, end_date: endDate });
+            const response = await getData('chat/messages/message_count', { channel: channel, start_date: startDate, end_date: endDate });
             const data = await response.json();
             // Assuming the data is { value: x }
             return {
@@ -74,7 +75,7 @@ export function StatsGrid({ dateRange }: StatsGridProps) {
                 value: 0,
             };
         }
-    }, []);
+    }, [channel]);
 
     useEffect(() => {
         const updateStats = async () => {

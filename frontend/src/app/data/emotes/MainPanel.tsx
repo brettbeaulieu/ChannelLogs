@@ -39,7 +39,7 @@ export default function MainPanel() {
                     console.error('Error polling task status:', error);
                     setIsPolling(false); // Stop polling on error
                 }
-            }, 100); // Poll every 0.1 seconds
+            }, 1000); // Poll every second
         }
 
         // Cleanup function to clear the interval

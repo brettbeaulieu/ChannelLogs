@@ -19,6 +19,7 @@ export interface SeriesStruct {
 export interface ChartProps {
     dateRange: [Date | null, Date | null];
     fetchURL: string;
+    channel: string;
     dataKey: string;
     series: SeriesStruct[];
     useMA: boolean;
@@ -95,14 +96,14 @@ const defaultStyle = 'Area';
 const defaultPeriod = 1;
 const defaultTitle = 'Untitled';
 
-export function InteractiveAreaChart({ dateRange, fetchURL, dataKey, series, useMA, maPeriod = defaultPeriod, granularity = defaultGran, unit = defaultUnit, style = defaultStyle, type = defaultType, title = defaultTitle, yAxisRange }: ChartProps) {
+export function InteractiveAreaChart({ dateRange, fetchURL, channel, dataKey, series, useMA, maPeriod = defaultPeriod, granularity = defaultGran, unit = defaultUnit, style = defaultStyle, type = defaultType, title = defaultTitle, yAxisRange }: ChartProps) {
     const [graphData, setGraphData] = useState<GraphItem[]>([]);
     const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(true);
 
-    const fetchGraphData = useCallback(async (granularity: string, startDate: string, endDate: string) => {
+    const fetchGraphData = useCallback(async (channel: string, granularity: string, startDate: string, endDate: string) => {
         granularity = granularity.toLowerCase().replace(/\s+/g, '') || 'day';
         try {
-            const response = await getData(fetchURL, { granularity, start_date: startDate, end_date: endDate });
+            const response = await getData(fetchURL, { channel, granularity, start_date: startDate, end_date: endDate });
             const data = await response.json();
             return data;
         } catch (error) {
@@ -124,21 +125,21 @@ export function InteractiveAreaChart({ dateRange, fetchURL, dataKey, series, use
                 return;
             }
 
-            const data = await fetchGraphData(granularity, startDate, endDate);
+            const data = await fetchGraphData(channel, granularity, startDate, endDate);
             const smoothedData = useMA ? smoothLineChartData(data, Number(maPeriod)) : data;
             setGraphData(smoothedData);
             setIsLoadingGraph(false);
         };
 
         updateGraph();
-    }, [fetchGraphData, granularity, dateRange, useMA, maPeriod]);
+    }, [fetchGraphData, granularity, dateRange, useMA, maPeriod, channel]);
 
     const [yMin, yMax] = yAxisRange ?? calculateYAxisRange(graphData);
 
 
     return (
         <div className={styles.root}>
-            <Paper shadow='xs' withBorder className={styles.mainPaper}>
+            <Paper withBorder className={styles.mainPaper}>
                 {
                     <Group className={styles.mainWidget}>
                         <Skeleton visible={isLoadingGraph}>

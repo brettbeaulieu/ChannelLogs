@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ChatFile, Emote, Message, User, EmoteSet
+from .models import ChatFile, Emote, Message, MessageEmote, User, EmoteSet
 
 
 class ChatFileSerializer(serializers.ModelSerializer):
@@ -10,6 +10,7 @@ class ChatFileSerializer(serializers.ModelSerializer):
             "id",
             "file",
             "filename",
+            "channel",
             "is_preprocessed",
             "uploaded_at",
             "metadata",
@@ -23,18 +24,18 @@ class ChatFileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         file = validated_data.pop("file", None)
         filename = validated_data.pop("filename", None)
+        channel = validated_data.pop("channel", None)
+
 
         if file:
             instance.file = file
             # Derives filename from file if filename not provided
             instance.filename = file.name.split("/")[-1]
-        elif filename:
+        if filename:
             # Allow filename to be manually set
             instance.filename = filename
-
-        # Update other fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        if channel:
+            instance.channel = channel
 
         instance.save()
         return instance
@@ -50,11 +51,9 @@ class MessageSerializer(serializers.ModelSerializer):
             "timestamp",
             "user",
             "message",
-            "emotes",
             "sentiment_score",
         ]
         extra_kwargs = {
-            "emotes": {"required": False},
             "sentiment_score": {"required": False},
         }
 
@@ -83,3 +82,11 @@ class EmoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Emote
         fields = ["id", "parent_set", "name", "emote_id"]
+
+class MessageEmoteSerializer(serializers.ModelSerializer):
+    emote = EmoteSerializer()
+    message = MessageSerializer()
+
+    class Meta:
+        model = MessageEmote
+        fields = ['id', 'message', 'emote', 'count']
