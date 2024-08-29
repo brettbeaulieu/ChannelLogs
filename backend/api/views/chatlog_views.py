@@ -203,4 +203,4 @@ class ChatFileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def get_all_channels(self, request, *args, **kwargs):
         objects = ChatFile.objects.all()
-        return Response({"names": [x["channel"] for x in objects.values()]}, status=status.HTTP_200_OK)
+        return Response({"names": {x["channel"] for x in objects.values()}}, status=status.HTTP_200_OK)

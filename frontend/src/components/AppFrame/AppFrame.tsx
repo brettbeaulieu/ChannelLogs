@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { NavbarNested } from '../NavbarNested/NavbarNested';
 
 interface AppFrameProps {
-    main: ReactNode;
+  main: ReactNode;
 }
 
 // Define a new component that accepts `main` as a prop
@@ -28,7 +28,7 @@ export function AppFrame({ main }: AppFrameProps) {
         </Group>
       </AppShell.Header>
       <AppShell.Navbar>
-        <NavbarNested/>
+        {<NavbarNested />}
       </AppShell.Navbar>
       <AppShell.Main>
         {main}

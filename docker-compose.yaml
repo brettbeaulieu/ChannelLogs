@@ -28,7 +28,7 @@ services:
       context: ${BACKEND_DIR}
     volumes:
       - ${BACKEND_DIR}:/app
-    command: celery -A backend worker --loglevel=info
+    command: celery -A backend worker --concurrency=1 --loglevel=info
     container_name: celery
     depends_on:
       - redis

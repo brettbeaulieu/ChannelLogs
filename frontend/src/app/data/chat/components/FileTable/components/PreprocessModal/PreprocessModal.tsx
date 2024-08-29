@@ -73,6 +73,7 @@ export function PreprocessModal({ parent_ids: _parent_ids, setTicketID, setIsPol
                 title: 'Emote Set Task Sent',
                 message: `Ticket: ${data.ticket}`,
             })
+            close();
         }
     }
 

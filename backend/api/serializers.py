@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ChatFile, Emote, Message, MessageEmote, User, EmoteSet
+from .models import ChatFile, Emote, Message, MessageEmote, EmoteSet
 
 
 class ChatFileSerializer(serializers.ModelSerializer):
@@ -49,23 +49,13 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = [
             "parent_log",
             "timestamp",
-            "user",
+            "username",
             "message",
             "sentiment_score",
         ]
         extra_kwargs = {
             "sentiment_score": {"required": False},
         }
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = [
-            "id",
-            "username",
-            "metadata",
-        ]
 
 
 class DateTimeSerializer(serializers.Serializer):

@@ -81,14 +81,14 @@ export default function MainPanel() {
   return (
     <Stack className={styles.mainStack}>
 
-      <Paper className={styles.top_paper} shadow="xs">
+      <Paper className={styles.top_paper}>
         <Group justify={'center'} gap={"sm"}>
           <FileUpload fetchFiles={fetchFiles} />
           <RustlogImport setTicketID={setTicketID} setIsPolling={setIsPolling} />
         </Group>
       </Paper>
 
-      <Paper shadow="xs" className={styles.paper}>
+      <Paper className={styles.paper}>
         <Group>
           <Text size="lg" style={{ margin: '1rem' }}>
             Uploaded Files ({files.length})

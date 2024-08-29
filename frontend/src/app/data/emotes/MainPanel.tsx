@@ -3,8 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Group, Button, Text, Paper, TextInput, Stack, Skeleton, Loader } from '@mantine/core';
-import { EmoteSetTable } from '@/components';
-import { EmoteSetData } from '@/components/EmoteSetTable/EmoteSetTable';
+import { EmoteSetTable, EmoteSetData } from './components';
 import styles from './MainPanel.module.css';
 import { getData, postData, deleteData, patchData } from '@/api/apiHelpers'
 import { notifications } from '@mantine/notifications';
@@ -133,7 +132,7 @@ export default function MainPanel() {
 
     return (
         <div className={styles.container}>
-            <Paper className={styles.top_paper} shadow="xs">
+            <Paper className={styles.top_paper}>
                 <Group justify={'center'}>
                     <Paper className={styles.inner_paper}>
                         <Stack className={styles.inner_paper_stack}>
@@ -154,7 +153,7 @@ export default function MainPanel() {
                 </Group>
             </Paper>
 
-            <Paper shadow="xs" className={styles.paper}>
+            <Paper className={styles.paper}>
                 <Group>
                     <Text size="lg" style={{ margin: '1rem' }}>
                         Emote Sets ({emoteSets.length})

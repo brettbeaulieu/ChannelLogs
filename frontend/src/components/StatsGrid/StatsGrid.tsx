@@ -18,7 +18,7 @@ export interface StatsGridProps {
 export function StatsGrid({ channel, dateRange }: StatsGridProps) {
     const [grids, setGrids] = useState<ReactElement[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [data, setData] = useState<{ user: DataStruct; messages: DataStruct } | null>(null);
+    const [data, setData] = useState<{ user: DataStruct; messages: DataStruct } | null>({user: {title:"Unique Users",value:0}, messages: {title:"Message Count",value:0}});
     const formatDate = (date: Date | null): string | null => {
         return date ? date.toISOString().split('T')[0] : null;
     };
@@ -85,6 +85,10 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
 
             if (!startDate || !endDate) {
                 console.error('Both start date and end date must be selected.');
+                setIsLoading(false);
+                return;
+            }
+            if (channel == ''){
                 setIsLoading(false);
                 return;
             }

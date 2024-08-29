@@ -6,6 +6,7 @@
 
 .paramsGroup {
     justify-content: space-evenly;
+    padding: var(--mantine-spacing-md);
     justify-items: space-evenly;
 }
 
@@ -28,6 +29,5 @@
 @media (min-width: 769px) {
     .paramsGroup {
         flex-grow: 1;
-        padding: var(--mantine-spacing-md);
     }
 }

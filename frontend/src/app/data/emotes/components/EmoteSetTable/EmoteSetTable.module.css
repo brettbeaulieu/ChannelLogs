@@ -30,6 +30,7 @@
 .tbody {
   background-color: var(--mantine-color-default);
   color: var(--mantine-text-color);
+  width: 100%;
 }
 
 .tr {

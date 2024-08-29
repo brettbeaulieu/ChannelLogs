@@ -1,10 +1,9 @@
 import cx from 'clsx';
-import { Table, Button, TextInput, Group, Tooltip, Box, Drawer, Text, Checkbox, Modal } from '@mantine/core';
-import { IconPencil, IconTrash, IconCircleCheck, IconCircleX, IconScanEye } from '@tabler/icons-react';
+import { Table, Button, TextInput, Group, Tooltip, Box, Drawer, Text, Checkbox } from '@mantine/core';
+import { IconPencil, IconTrash, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { deleteData, parseFormatDateTime, patchData } from '@/api/apiHelpers';
 import styles from './FileTable.module.css';
-import { useDisclosure } from '@mantine/hooks';
 import { PreprocessModal } from './components';
 import { VisibilityMenu } from './components';
 
@@ -41,21 +40,6 @@ export function FileTable({ files, fetchFiles, setTicketID, setIsPolling }: File
     actions: true,
   });
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-
-  const handleEdit = async (fileId: string, newFileName: string) => {
-    try {
-      const formData = new FormData();
-      formData.append('filename', newFileName);
-      const response = await patchData(`chat/files/${fileId}/`, formData);
-      if (!response.ok) {
-        throw new Error(`Failed to edit file ${fileId}: ${response.status}`);
-      }
-      await fetchFiles();
-    } catch (error) {
-      console.error(`Error editing file ${fileId}:`, error);
-    }
-  }
-
 
   useEffect(() => {
     setDrawerOpened(selectedFiles.size > 0);
@@ -206,7 +190,7 @@ export function FileTable({ files, fetchFiles, setTicketID, setIsPolling }: File
       )}
       {visibleColumns.channel && (
         <Table.Td className={styles.propCell}>
-          {editingChannelFileID ? (
+          {editingChannelFileID === file.id ? (
             <Group align="center">
               <TextInput
                 value={newChannel}
@@ -271,26 +255,27 @@ export function FileTable({ files, fetchFiles, setTicketID, setIsPolling }: File
       <Group mb="md">
         <VisibilityMenu visibleColumns={visibleColumns} handleVisibilityChange={handleColumnVisibilityChange} />
       </Group>
-      <Table className={styles.table}>
-        <Table.Thead className={styles.thead}>
-          <Table.Tr className={styles.tr}>
-            {<Table.Th className={styles.fileHeader}>
-              <Checkbox
-                onChange={toggleAll}
-                checked={selectedFiles.size === files.length}
-                indeterminate={selectedFiles.size > 0 && selectedFiles.size !== files.length}
-              /></Table.Th>}
-            {visibleColumns.filename && <Table.Th className={styles.fileHeader}>File Name</Table.Th>}
-            {visibleColumns.channel && <Table.Th className={styles.fileHeader}>Channel</Table.Th>}
-            {visibleColumns.is_preprocessed && <Table.Th className={styles.actionHeader}>Preprocessed</Table.Th>}
-            {visibleColumns.uploaded_at && <Table.Th className={styles.actionHeader}>Upload Date</Table.Th>}
-            {visibleColumns.metadata && <Table.Th className={styles.actionHeader}>Metadata</Table.Th>}
-            {visibleColumns.actions && <Table.Th className={styles.actionHeader}>Actions</Table.Th>}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
-      </Table>
-
+      <Table.ScrollContainer minWidth={400}>
+        <Table className={styles.table}>
+          <Table.Thead className={styles.thead}>
+            <Table.Tr className={styles.tr}>
+              {<Table.Th className={styles.fileHeader}>
+                <Checkbox
+                  onChange={toggleAll}
+                  checked={selectedFiles.size === files.length}
+                  indeterminate={selectedFiles.size > 0 && selectedFiles.size !== files.length}
+                /></Table.Th>}
+              {visibleColumns.filename && <Table.Th className={styles.fileHeader}>File Name</Table.Th>}
+              {visibleColumns.channel && <Table.Th className={styles.fileHeader}>Channel</Table.Th>}
+              {visibleColumns.is_preprocessed && <Table.Th className={styles.actionHeader}>Preprocessed</Table.Th>}
+              {visibleColumns.uploaded_at && <Table.Th className={styles.actionHeader}>Upload Date</Table.Th>}
+              {visibleColumns.metadata && <Table.Th className={styles.actionHeader}>Metadata</Table.Th>}
+              {visibleColumns.actions && <Table.Th className={styles.actionHeader}>Actions</Table.Th>}
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
       {/* Sliding Drawer for Bulk Actions */}
       <Drawer
         trapFocus={false}

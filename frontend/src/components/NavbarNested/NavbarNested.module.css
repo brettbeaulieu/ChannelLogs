@@ -33,3 +33,10 @@
   flex: 1;
   padding: var(--mantine-spacing-xl) 0;
 }
+
+@media (max-width: 768px) {
+  .desktopNavbar {
+    width: 100vw;
+    height: 85vh;
+  }
+}

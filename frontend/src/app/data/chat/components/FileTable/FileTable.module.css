@@ -89,3 +89,14 @@
 .rowSelected {
   background-color: var(--mantine-color-blue-light);
 }
+
+@media (max-width: 768px) {
+  .table {
+    width: 100%;
+    margin-bottom: 15vh;
+  }
+  .tbody {
+    width: 100%;
+
+  }
+}

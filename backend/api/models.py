@@ -24,16 +24,6 @@ class ChatFile(models.Model):
             os.remove(self.file.path)
         super(ChatFile, self).delete(*args, **kwargs)
 
-
-class User(models.Model):
-    username = models.CharField(max_length=64, unique=True)
-    metadata = models.JSONField(null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["username", "metadata"], name="unique_user")
-        ]
-
 class EmoteSet(models.Model):
     name = models.TextField(blank=False)
     set_id = models.TextField(blank=False, unique=True)
@@ -47,7 +37,7 @@ class Emote(models.Model):
 class Message(models.Model):
     parent_log = models.ForeignKey(ChatFile, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(null=False, blank=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    username = models.CharField(max_length=255, null=False, blank=False, default="Default")
     message = models.TextField(blank=True)
     sentiment_score = models.FloatField(null=True, blank=True)
 

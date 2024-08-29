@@ -1,0 +1,1 @@
+export { EmoteSetTable, type EmoteSetData } from './EmoteSetTable/EmoteSetTable';

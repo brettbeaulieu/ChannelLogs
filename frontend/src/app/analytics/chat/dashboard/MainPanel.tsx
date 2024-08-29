@@ -1,15 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { InteractiveAreaChart, StatsGrid } from "@/components";
 import { Group, Paper, Stack } from "@mantine/core";
 import { EmoteList, ParametersGroup } from './components';
 import styles from "./MainPanel.module.css";
-
-const formatDate = (date: Date | null): string | null => {
-  if (!date) return null;
-  return date.toISOString().split('T')[0];
-};
 
 export default function MainPanel() {
   const today = new Date();
@@ -22,19 +17,6 @@ export default function MainPanel() {
   const [granularity, setGranularity] = useState<string | undefined>('Day');
   const [useMA, setUseMA] = useState<boolean>(false);
   const [maPeriod, setMAPeriod] = useState<string | number>(1);
-
-  useEffect(() => {
-    const updateDate = async () => {
-      const startDate = formatDate(dateRange[0]);
-      const endDate = formatDate(dateRange[1]);
-
-      if (!startDate || !endDate) {
-        console.error('Both start date and end date must be selected.');
-        return;
-      }
-    };
-    updateDate();
-  }, [dateRange]);
 
   return (
     <main className={styles.main}>
@@ -96,11 +78,11 @@ export default function MainPanel() {
                 maPeriod={maPeriod}
                 granularity={granularity}
                 dateRange={dateRange}
-                series={[{ label: "Sentiment", name: 'value', color: 'bright' }]}
+                series={[{ label: "Average Sentiment", name: 'value', color: 'bright' }]}
                 dataKey={"date"}
                 type={"split"}
                 style={chartStyle}
-                title={"Sentiment"}
+                title={"Average Sentiment"}
                 yAxisRange={[-1, 1]}
               />
               <EmoteList channel={channel ? channel : ''} dateRange={dateRange} />

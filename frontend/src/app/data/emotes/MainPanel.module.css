@@ -19,7 +19,7 @@
   padding: var(--mantine-spacing-md);
   height: 100%;
   width: 25%;
-  border-radius: var(--mantine-radius-lg);
+  border-radius: 0;
 }
 
 .inner_paper_stack {
@@ -68,5 +68,12 @@
   &[data-reject] {
     color: var(--mantine-color-white);
     background-color: var(--mantine-color-red-6);
+  }
+}
+
+@media (max-width: 768px) {
+  .inner_paper {
+    height: 100%;
+    width: 100%;
   }
 }

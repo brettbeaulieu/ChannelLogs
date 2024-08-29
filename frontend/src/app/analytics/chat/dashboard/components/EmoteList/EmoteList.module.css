@@ -1,6 +1,6 @@
 .rootPaper {
     border-radius: 0px;
-    height: 48.5%;
+    height: 48%;
 }
 
 .skeleton {
@@ -11,6 +11,4 @@
     height: 100%;
 }
 
-.table {
-
-}
+.table {}

@@ -28,7 +28,7 @@
     }
 
     .inner_paper, .inner_paper_stack {
-        height: 37vh;
+        height: 100%;
         width: 100%;
     }
     .paramsGroup {

@@ -2,7 +2,7 @@ import re
 from collections import Counter
 from transformers import pipeline
 
-from ..models import ChatFile, Emote, EmoteSet, MessageEmote, User, Message
+from ..models import ChatFile, Emote, EmoteSet, MessageEmote, Message
 
 # Constants
 CREATE_PREFIX = "bulk_create/"
@@ -49,7 +49,7 @@ def read_line_chatterino(
             emote_count = count_emotes_in_msg(message, emote_names)
         return {
             "timestamp": timestamp,
-            "user": user,
+            "username": user,
             "message": message,
             "emotes": emote_count,
         }
@@ -76,7 +76,7 @@ def read_line_rustlog(line: str, emote_names: list[str] = []) -> dict[str, any]:
 
         return {
             "timestamp": timestamp,
-            "user": user,
+            "username": user,
             "message": message,
             "emotes": emote_count,
         }
@@ -152,10 +152,6 @@ def preprocess_log(
     # Extract info from lines
     form_data_list = extract_info(log_path, emote_names)
 
-    # Find new users
-    users_set = set([user.username for user in User.objects.all()])
-    new_users = set([x["user"] for x in form_data_list]) - users_set
-
     # Validate messages by length for sentiment analysis
     msg_validator = lambda x: is_valid_message(x, minWords, useEmotes)
 
@@ -197,15 +193,8 @@ def preprocess_log(
             else:
                 item.update({"sentiment_score": sentiment_score.pop(0)})
 
-    # Insert new users
-    users_to_create = [User(username=new_user) for new_user in new_users]
-    User.objects.bulk_create(users_to_create)
 
-    # Fetch all users
-    usernames = {user_data["user"] for user_data in form_data_list}
-    users = {
-        user.username: user for user in User.objects.filter(username__in=usernames)
-    }
+
 
     # Prepare messages in bulk
     parent_log = ChatFile.objects.get(id=parent_id)
@@ -214,11 +203,9 @@ def preprocess_log(
 
     for user_data in form_data_list:
         # Extract user and remove it from the data dictionary
-        user = users[user_data["user"]]
-        message_data = {key: value for key, value in user_data.items() if key != "user"}
 
         # Create a Message instance with the remaining data
-        message = Message(parent_log=parent_log, user=user, timestamp=message_data["timestamp"], message=message_data["message"], sentiment_score=message_data["sentiment_score"])
+        message = Message(parent_log=parent_log, username=user_data["username"], timestamp=user_data["timestamp"], message=user_data["message"], sentiment_score=user_data["sentiment_score"])
         messages_to_create.append(message)
 
         emotes = user_data.get("emotes", {})

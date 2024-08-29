@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Group, Paper, Skeleton, Stack, Text } from '@mantine/core';
 import styles from './InteractiveAreaChart.module.css';
 import { AreaChart, AreaChartType, BarChart } from '@mantine/charts';
@@ -98,7 +98,7 @@ const defaultTitle = 'Untitled';
 
 export function InteractiveAreaChart({ dateRange, fetchURL, channel, dataKey, series, useMA, maPeriod = defaultPeriod, granularity = defaultGran, unit = defaultUnit, style = defaultStyle, type = defaultType, title = defaultTitle, yAxisRange }: ChartProps) {
     const [graphData, setGraphData] = useState<GraphItem[]>([]);
-    const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(true);
+    const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(false);
 
     const fetchGraphData = useCallback(async (channel: string, granularity: string, startDate: string, endDate: string) => {
         granularity = granularity.toLowerCase().replace(/\s+/g, '') || 'day';
@@ -124,15 +124,26 @@ export function InteractiveAreaChart({ dateRange, fetchURL, channel, dataKey, se
                 setIsLoadingGraph(false);
                 return;
             }
+            if (channel == ''){
+                setGraphData([]);
+                setIsLoadingGraph(false);
+                return;
+            }
 
             const data = await fetchGraphData(channel, granularity, startDate, endDate);
-            const smoothedData = useMA ? smoothLineChartData(data, Number(maPeriod)) : data;
-            setGraphData(smoothedData);
+            setGraphData(data);
             setIsLoadingGraph(false);
         };
-
         updateGraph();
-    }, [fetchGraphData, granularity, dateRange, useMA, maPeriod, channel]);
+    }, [fetchGraphData, granularity, dateRange, channel]);
+
+    const smoothedData = useMemo(() => {
+        if (useMA) {
+            return smoothLineChartData(graphData, Number(maPeriod));
+        }
+        return graphData;
+    },[graphData, useMA, maPeriod])
+
 
     const [yMin, yMax] = yAxisRange ?? calculateYAxisRange(graphData);
 
@@ -144,11 +155,11 @@ export function InteractiveAreaChart({ dateRange, fetchURL, channel, dataKey, se
                     <Group className={styles.mainWidget}>
                         <Skeleton visible={isLoadingGraph}>
                             <Stack className={styles.innerGroup} gap="xs">
-                                <Text size="xl" ta="left" className={styles.title}> {title} </Text>
-                                {style == 'Area' ? (<AreaChart data={graphData} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
-                                    className={styles.chart} withLegend withDots={false}  unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} areaChartProps={{ syncId: 'msgs' }}
+                                <Text size="xl" ta="left" className={styles.title}> {granularity ? title+' / '+granularity: title} </Text>
+                                {style == 'Area' ? (<AreaChart data={smoothedData} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
+                                    className={styles.chart} withLegend withDots={false} unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} areaChartProps={{ syncId: 'msgs' }}
                                 />) :
-                                    (<BarChart data={graphData} dataKey={dataKey} series={series} withLegend valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }}  yAxisProps={{ domain: [yMin, yMax] }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
+                                    (<BarChart data={smoothedData} dataKey={dataKey} series={series} withLegend valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
                             </Stack>
                         </Skeleton>
                     </Group>

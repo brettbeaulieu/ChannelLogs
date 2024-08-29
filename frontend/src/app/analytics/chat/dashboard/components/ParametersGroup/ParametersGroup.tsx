@@ -41,10 +41,10 @@ export function ParametersGroup({
     dateRange,
     setDateRange
 }: ParametersGroupProps) {
-    
+
 
     const [channelList, setChannelList] = useState<string[]>([]);
-    
+
     // Fetch channel list when component mounts
     useEffect(() => {
         async function fetchChannelList() {
@@ -59,7 +59,7 @@ export function ParametersGroup({
 
         fetchChannelList();
     }, []); // Empty dependency array means this runs only once
-    
+
 
 
     return (
@@ -71,7 +71,7 @@ export function ParametersGroup({
                         data={channelList}
                         value={channel}
                         onChange={setChannel}
-                        searchable 
+                        searchable
                     />
 
                 </Stack>

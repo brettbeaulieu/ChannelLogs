@@ -1,6 +1,6 @@
 import { Table, Button, TextInput, Group, Tooltip, Box } from '@mantine/core';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from './EmoteSetTable.module.css';
 import Link from 'next/link';
 
@@ -86,15 +86,17 @@ export function EmoteSetTable({ emoteSets, onDelete, onEdit }: EmoteSetTableProp
     ));
 
     return (
-        <Table className={styles.table}>
-            <Table.Thead className={styles.thead}>
-                <Table.Tr className={styles.tr}>
-                    <Table.Th className={styles.fileHeader}>Name</Table.Th>
-                    <Table.Th className={styles.fileHeader}>ID</Table.Th>
-                    <Table.Th className={styles.fileHeader}>Actions</Table.Th>
-                </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
-        </Table>
+        <Table.ScrollContainer minWidth={400}>
+            <Table className={styles.table}>
+                <Table.Thead className={styles.thead}>
+                    <Table.Tr className={styles.tr}>
+                        <Table.Th className={styles.fileHeader}>Name</Table.Th>
+                        <Table.Th className={styles.fileHeader}>ID</Table.Th>
+                        <Table.Th className={styles.fileHeader}>Actions</Table.Th>
+                    </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
+            </Table>
+        </Table.ScrollContainer>
     );
 }

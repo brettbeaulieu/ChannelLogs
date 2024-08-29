@@ -205,10 +205,12 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Find the number of distinct users who sent messages within the given date range
         unique_users = (
-            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
-            .values("user")
+            Message.objects.filter(
+                timestamp__range=[start_date, end_date], parent_log__channel=channel
+            )
+            .values("username")
             .distinct()
-            .aggregate(count=Count("user"))["count"]
+            .aggregate(count=Count("username"))["count"]
         )
 
         return Response({"value": unique_users}, status=status.HTTP_200_OK)
@@ -248,10 +250,12 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate unique users based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
+            Message.objects.filter(
+                timestamp__range=[start_date, end_date], parent_log__channel=channel
+            )
             .annotate(period=truncate_func("timestamp"))
             .values("period")
-            .annotate(unique_users=Count("user", distinct=True))  # Count unique users
+            .annotate(unique_users=Count("username", distinct=True))  # Count unique users
             .order_by("period")
         )
 
@@ -301,7 +305,9 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate message counts based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
+            Message.objects.filter(
+                timestamp__range=[start_date, end_date], parent_log__channel=channel
+            )
             .annotate(period=truncate_func("timestamp"))
             .values("period")
             .annotate(senti=Avg("sentiment_score"))
@@ -317,7 +323,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             for entry in aggregated_data
         ]
 
-        moving_avg_data = normalize(formatted_data)
+        moving_avg_data = formatted_data
 
         return Response(moving_avg_data, status=status.HTTP_200_OK)
 
@@ -359,7 +365,9 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Aggregate message counts based on the specified granularity
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
+            Message.objects.filter(
+                timestamp__range=[start_date, end_date], parent_log__channel=channel
+            )
             .annotate(period=truncate_func("timestamp"))
             .values("period")
             .annotate(toxic=Sum("sentiment_score"))
@@ -402,7 +410,9 @@ class MessageViewSet(viewsets.ModelViewSet):
             )
         # Aggregate positive, neutral, and negative scores.
         aggregated_data = (
-            Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
+            Message.objects.filter(
+                timestamp__range=[start_date, end_date], parent_log__channel=channel
+            )
             .values("sentiment_score")
             .annotate(count=Count("sentiment_score"))
             .order_by("sentiment_score")
@@ -494,29 +504,38 @@ def calculate_running_sum(data):
 
     return result
 
+
 def normalize(data):
-    """ Normalize data as returned from calculate_running_sum """
-    values = [x["value"] for x in data]
-    average = sum(values)/len(values)
-    return [{"date": entry["date"], "value": entry["value"]-average} for entry in data]
-
-
-
+    """Normalize data as returned from calculate_running_sum"""
+    if data:
+        values = [x["value"] for x in data]
+        average = sum(values) / len(values)
+        return [
+            {"date": entry["date"], "value": entry["value"] - average} for entry in data
+        ]
+    return []
 
 def get_emote_sums(channel, start_date, end_date):
     # Filter messages between the two timestamps
-    messages = Message.objects.filter(timestamp__range=[start_date, end_date], parent_log__channel=channel)
+    messages = Message.objects.filter(
+        timestamp__range=[start_date, end_date], parent_log__channel=channel
+    )
 
     # Get the emote occurrences in these messages
     emote_occurrences = (
         MessageEmote.objects.filter(message__in=messages)
-        .values("emote__emote_id","emote__name")
+        .values("emote__emote_id", "emote__name")
         .annotate(total_count=Sum("count"))
         .order_by("emote__name")
     )
 
     # Convert the result to a dictionary for easier usage
     emote_count_by_name = [
-        {"id": item["emote__emote_id"], "name": item["emote__name"], "value": item["total_count"]} for item in emote_occurrences
+        {
+            "id": item["emote__emote_id"],
+            "name": item["emote__name"],
+            "value": item["total_count"],
+        }
+        for item in emote_occurrences
     ]
     return sorted(emote_count_by_name, key=lambda x: x["value"], reverse=True)

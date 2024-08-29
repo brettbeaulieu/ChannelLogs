@@ -21,7 +21,7 @@ const formatDate = (date: Date | null): string | null => {
 };
 
 export function EmoteList({ channel, dateRange }: EmoteListProps) {
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [rows, setRows] = useState<ReactElement[]>([]);
 
     const buildItem = useCallback((element: Element, idx: number): ReactElement => {
@@ -29,9 +29,9 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
         return (
             <Table.Tr key={element.name}>
                 <Table.Td>{<Text fw={400} ta={"center"} size={"xl"}>{idx + 1}</Text>}</Table.Td>
-                <Table.Td align={"center"}>{<Image alt={element.name} src={image_link} h={48} w={48} radius={"md"} />}</Table.Td>
+                <Table.Td align={"center"}>{<Image alt={element.name} src={image_link} h={48} w={48} radius={"md"} fit={"contain"} />}</Table.Td>
                 <Table.Td>{element.name}</Table.Td>
-                <Table.Td>{element.value}</Table.Td>
+                <Table.Td>{new Intl.NumberFormat('en-US').format(element.value)}</Table.Td>
             </Table.Tr>
         )
     }, []);
@@ -47,7 +47,11 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
             const endDate = formatDate(dateRange[1]);
 
             if (!startDate || !endDate) {
-                console.error('Both start date and end date must be selected.');
+                setIsLoading(false);
+                return;
+            }
+            if (channel == ''){
+                setRows([]);
                 setIsLoading(false);
                 return;
             }
@@ -66,12 +70,14 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
             <Skeleton visible={isLoading} className={styles.skeleton}>
                 <Table.ScrollContainer minWidth={200} type="scrollarea" className={styles.scrollContainer}>
                     <Table classNames={{ tbody: styles.table }}>
-                        <Table.Tr>
-                            <Table.Th ta={"center"}>Rank</Table.Th>
-                            <Table.Th ta={"center"}>Image</Table.Th>
-                            <Table.Th>Emote Name</Table.Th>
-                            <Table.Th>Count</Table.Th>
-                        </Table.Tr>
+                        <Table.Thead>
+                            <Table.Tr>
+                                <Table.Th ta={"center"}>Rank</Table.Th>
+                                <Table.Th ta={"center"}>Image</Table.Th>
+                                <Table.Th>Emote Name</Table.Th>
+                                <Table.Th>Count</Table.Th>
+                            </Table.Tr>
+                        </Table.Thead>
                         <Table.Tbody>{rows}</Table.Tbody>
                     </Table>
                 </Table.ScrollContainer>
