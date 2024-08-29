@@ -14,9 +14,14 @@ export interface StatsGridProps {
     dateRange: [Date | null, Date | null];
 }
 
+// Define a mapping of titles to icons
+const iconMapping: Record<string, ReactElement> = {
+    'Unique Users': <IconUser className={styles.icon} size="1.4rem" stroke={1.5} />,
+    'Message Count': <IconMessage className={styles.icon} size="1.4rem" stroke={1.5} />,
+}
+
 
 export function StatsGrid({ channel, dateRange }: StatsGridProps) {
-    const [grids, setGrids] = useState<ReactElement[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [data, setData] = useState<{ user: DataStruct; messages: DataStruct } | null>({user: {title:"Unique Users",value:0}, messages: {title:"Message Count",value:0}});
     const formatDate = (date: Date | null): string | null => {
@@ -24,6 +29,9 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
     };
 
     const buildGrid = useCallback((data: DataStruct) => {
+        // Select an icon based on data title
+        const icon = iconMapping[data.title] || <IconMessage size="1.4rem" stroke={1.5} />;
+
         return (
             <Paper withBorder className={styles.paper}>
                 <Stack className={styles.stack}>
@@ -31,7 +39,7 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
                         <Text size="xs" className={styles.title}>
                             {data.title}
                         </Text>
-                        <IconMessage className={styles.icon} size="1.4rem" stroke={1.5} />
+                        {icon}
                     </Group>
                     <Text className={styles.value}>
                         {<NumberFormatter thousandSeparator value={data.value} />}
@@ -39,7 +47,7 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
                 </Stack>
             </Paper>
         )
-    }, [isLoading]);
+    }, []);
 
     const fetchUserData = useCallback(async (startDate: string, endDate: string) => {
         try {
@@ -103,7 +111,7 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
             }
         };
         updateStats();
-    }, [dateRange, fetchMessageData, fetchUserData]);
+    }, [channel, dateRange, fetchMessageData, fetchUserData]);
 
     return (
         <div className={styles.root}>
