@@ -1,22 +1,37 @@
-.mainStack {}
+.mainStack {
+  margin: var(--mantine-spacing-md);
+  max-height: 90vh;
+}
+
+.fileUploadPaper {
+  height: 100%;
+  width: 100%;
+}
+
+.topGroup {
+  justify-content: space-between;
+}
 
 .top_paper {
   margin: var(--mantine-spacing-md);
-  padding: var(--mantine-spacing-md);
 }
 
-.top_group {
-  display: flex;
-  align-items: stretch;
+.topGroup,
+.botGroup {
+  margin: var(--mantine-spacing-md);
 }
 
-.paper {}
+.paper {
+  margin: var(--mantine-spacing-md);
+}
+
 
 
 .top_paper,
 .paper {
-  background-color: var(--mantine-color-default);
+  background-color: var(--mantine-color-body);
   border-radius: 0;
+  width: 100%;
 }
 
 @media (min-width: 769px) {
@@ -25,6 +40,9 @@
 @media (max-width: 768px) {
   .top_paper {
     min-height: 60vh;
+  }
+
+  .topGroup {
   }
 
 }

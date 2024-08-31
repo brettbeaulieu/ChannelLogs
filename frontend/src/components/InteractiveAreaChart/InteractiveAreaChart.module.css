@@ -6,8 +6,12 @@
     border-radius: 0px;
 }
 
+.textLabel {
+    font-weight: 300;
+}
+
 .chart {
-    height: 22vh;
+    height: 23vh;
     width: 100%;
     min-height: 100px;
     min-width: 100px;
@@ -15,7 +19,8 @@
 
 .title {
     margin-bottom: 0px;
-    font-weight: 700;
+    font-weight: 300;
+    text-transform: uppercase;
 }
 
 .innerGroup {

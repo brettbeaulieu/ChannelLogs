@@ -65,69 +65,81 @@ export function ParametersGroup({
     return (
         <Paper className={styles.paramsPaper}>
             <Group className={styles.paramsGroup}>
-                <Stack>
-                    <Text ta="center">Channel</Text>
-                    <Select
-                        data={channelList}
-                        value={channel}
-                        onChange={setChannel}
-                        searchable
-                    />
+                <Paper withBorder className={styles.innerPaper}>
+                    <Stack>
+                        <Text ta="center" className={styles.textLabel}>Channel</Text>
+                        <Select
+                            classNames={{ label: styles.innerTextLabel }}
+                            data={channelList}
+                            value={channel}
+                            onChange={setChannel}
+                            searchable
+                        />
 
-                </Stack>
+                    </Stack>
+                </Paper>
 
+                <Paper withBorder className={styles.innerPaper}>
+                    <Stack>
+                        <Text ta="center" className={styles.textLabel}>Date Range</Text>
+                        <DateMenu
+                            dateRange={dateRange}
+                            dateChange={setDateRange}
+                        />
+                    </Stack>
+                </Paper>
+                <Paper withBorder className={styles.innerPaper}>
+                    <Stack>
+                        <Text ta="center" className={styles.textLabel}>Granularity</Text>
+                        <SegmentedControl
 
-                <Stack>
-                    <Text ta="center">Date Range</Text>
-                    <DateMenu
-                        dateRange={dateRange}
-                        dateChange={setDateRange}
-                    />
-                </Stack>
-                <Stack>
-                    <Text ta="center">Granularity</Text>
-                    <SegmentedControl
-                        value={granularity}
-                        onChange={setGranularity}
-                        data={['Minute', 'Hour', 'Day', 'Week', 'Month']}
-                        className={styles.select}
-                        fullWidth
-                    />
-                </Stack>
-                <Stack>
-                    <Text ta="center">Chart Type</Text>
-                    <SegmentedControl
-                        value={chartStyle}
-                        onChange={setChartStyle}
-                        data={['Area', 'Bar']}
-                        className={styles.select}
-                        fullWidth
-                    />
-                </Stack>
+                            value={granularity}
+                            onChange={setGranularity}
+                            data={['Minute', 'Hour', 'Day', 'Week', 'Month']}
+                            classNames={{ root: styles.select, label: styles.innerTextLabel }}
+                            fullWidth
+                        />
+                    </Stack>
+                </Paper>
+                <Paper withBorder className={styles.innerPaper}>
+                    <Stack>
+                        <Text ta="center" className={styles.textLabel}>Chart Type</Text>
+                        <SegmentedControl
+                            classNames={{ label: styles.innerTextLabel }}
+                            value={chartStyle}
+                            onChange={setChartStyle}
+                            data={['Area', 'Bar']}
+                            className={styles.select}
+                            fullWidth
+                        />
+                    </Stack>
+                </Paper>
+                <Paper withBorder className={styles.innerPaper}>
+                    <Stack>
+                        <Text ta="center" className={styles.textLabel}>Use MA</Text>
+                        <Checkbox
+                            checked={useMA}
+                            onChange={(event) => setUseMA(event.currentTarget.checked)}
+                            className={styles.checkbox}
+                            data-testid="enable-ma-checkbox"
+                        />
+                    </Stack>
+                </Paper>
 
-
-                <Stack>
-                    <Text ta="center">Use MA</Text>
-                    <Checkbox
-                        checked={useMA}
-                        onChange={(event) => setUseMA(event.currentTarget.checked)}
-                        className={styles.checkbox}
-                        data-testid="enable-ma-checkbox"
-                    />
-                </Stack>
-
-                <Stack>
-                    <Text ta="center">MA Period</Text>
-                    <NumberInput
-                        value={maPeriod}
-                        onChange={(value) => setMAPeriod(value)}
-                        min={1}
-                        max={1000}
-                        step={1}
-                        className={styles.numberInput}
-                        data-testid="ma-period-input"
-                    />
-                </Stack>
+                <Paper withBorder className={styles.innerPaper}>
+                    <Stack>
+                        <Text ta="center" className={styles.textLabel}>MA Period</Text>
+                        <NumberInput
+                            value={maPeriod}
+                            onChange={(value) => setMAPeriod(value)}
+                            min={1}
+                            max={1000}
+                            step={1}
+                            className={styles.numberInput}
+                            data-testid="ma-period-input"
+                        />
+                    </Stack>
+                </Paper>
             </Group>
         </Paper>
     );

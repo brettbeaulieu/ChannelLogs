@@ -1,4 +1,4 @@
-import { getData } from "@/api/apiHelpers";
+import { getData, toIsoDateString } from "@/api/apiHelpers";
 import { Paper, Table, Image, Skeleton, Text } from "@mantine/core";
 import { ReactElement, useCallback, useEffect, useState } from "react";
 import styles from './EmoteList.module.css';
@@ -15,10 +15,6 @@ interface EmoteListProps {
     channel: string;
     dateRange: [Date | null, Date | null];
 }
-
-const formatDate = (date: Date | null): string | null => {
-    return date ? date.toISOString().split('T')[0] : null;
-};
 
 export function EmoteList({ channel, dateRange }: EmoteListProps) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -43,21 +39,16 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
     useEffect(() => {
         async function fetchData() {
             setIsLoading(true);
-            const startDate = formatDate(dateRange[0]);
-            const endDate = formatDate(dateRange[1]);
-
-            if (!startDate || !endDate) {
-                setIsLoading(false);
-                return;
-            }
-            if (channel == ''){
+            if (!dateRange[0] || !dateRange[1] || !channel ) {
                 setRows([]);
                 setIsLoading(false);
                 return;
             }
+            const startDate = toIsoDateString(dateRange[0]);
+            const endDate = toIsoDateString(dateRange[1]);
+
             const response = await getData('chat/messages/popular_emotes', { channel: channel, start_date: startDate, end_date: endDate });
             const data: Element[] = await response.json();
-            console.log(data);
             const temp_rows: ReactElement[] = buildItems(data);
             setRows(temp_rows);
             setIsLoading(false);
@@ -69,7 +60,7 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
         <Paper withBorder className={styles.rootPaper}>
             <Skeleton visible={isLoading} className={styles.skeleton}>
                 <Table.ScrollContainer minWidth={200} type="scrollarea" className={styles.scrollContainer}>
-                    <Table classNames={{ tbody: styles.table }}>
+                    <Table classNames={{table: styles.table, tbody: styles.tbody}}>
                         <Table.Thead>
                             <Table.Tr>
                                 <Table.Th ta={"center"}>Rank</Table.Th>

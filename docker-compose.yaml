@@ -1,28 +1,4 @@
 services:
-  backend:
-    build:
-      context: ${BACKEND_DIR}
-    command: >
-        sh -c "python manage.py makemigrations &&
-           python manage.py migrate &&
-           python manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - ${BACKEND_DIR}:/app
-    ports:
-      - "8000:8000"
-    environment:
-      - DEBUG=True
-      - DJANGO_SETTINGS_MODULE=backend.settings
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    container_name: backend
-    depends_on:
-      - redis
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-
   celery:
     build:
       context: ${BACKEND_DIR}
@@ -39,7 +15,7 @@ services:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu]
+              capabilities: [ gpu ]
         limits:
           cpus: "4.0"
 
@@ -58,6 +34,30 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+
+  backend:
+    build:
+      context: ${BACKEND_DIR}
+    command: >
+      sh -c "python manage.py makemigrations &&
+         python manage.py migrate &&
+         python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ${BACKEND_DIR}:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=backend.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    container_name: backend
+    depends_on:
+      - redis
     deploy:
       resources:
         limits:

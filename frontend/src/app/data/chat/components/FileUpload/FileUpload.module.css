@@ -1,32 +1,20 @@
-.centered_header {
-  font-weight: 300;
-  font-size: large;
-  text-align: center;
-}
-
-
-.button {
-  width: 100%;
-}
 
 .inner_paper {
   display: flex;
   margin: var(--mantine-spacing-md);
   padding: var(--mantine-spacing-md);
-
-  height: 15vh;
+  width: 40%;
+  height: 100%;
   border-radius: 0;
 }
-
 .inner_paper_stack {
   width: 100%;
   height: 100%;
 }
-
-.inner_paper_stack2 {
-  width: 100%;
-  height: 100%;
-  flex: 1;
+.centered_header {
+  font-weight: 300;
+  font-size: large;
+  text-align: center;
 }
 
 .file_upload {
@@ -53,14 +41,9 @@
 }
 
 @media (min-width: 769px) {
-  .inner_paper {
-    width: 25%;
-  }
+
 }
 
 @media (max-width: 768px) {
-  .inner_paper {
-    width: 100%;
-    height: 100%;
-  }
+
 }

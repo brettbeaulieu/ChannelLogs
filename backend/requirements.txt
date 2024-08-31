@@ -1,6 +1,7 @@
 celery
 datasets
 django
+django-filter
 djangorestframework
 django-cors-headers
 gunicorn

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Group, Paper, Skeleton, Stack, Text } from '@mantine/core';
 import styles from './InteractiveAreaChart.module.css';
 import { AreaChart, AreaChartType, BarChart } from '@mantine/charts';
-import { getData } from '@/api/apiHelpers';
+import { getData, toIsoDateString } from '@/api/apiHelpers';
 
 interface GraphItem {
     date: string;
@@ -65,10 +65,6 @@ const smoothLineChartData = (data: GraphItem[], windowSize: number): GraphItem[]
     return smoothedData;
 };
 
-const formatDate = (date: Date | null): string | null => {
-    return date ? date.toISOString().split('T')[0] : null;
-};
-
 const formatXAxis = (tickItem: any, granularity: string): string => {
     const date = new Date(tickItem);
     switch (granularity) {
@@ -116,19 +112,15 @@ export function InteractiveAreaChart({ dateRange, fetchURL, channel, dataKey, se
     useEffect(() => {
         const updateGraph = async () => {
             setIsLoadingGraph(true);
-            const startDate = formatDate(dateRange[0]);
-            const endDate = formatDate(dateRange[1]);
 
-            if (!startDate || !endDate) {
-                console.error('Both start date and end date must be selected.');
-                setIsLoadingGraph(false);
-                return;
-            }
-            if (channel == ''){
+            if (!dateRange[0] || !dateRange[1] || !channel) {
                 setGraphData([]);
                 setIsLoadingGraph(false);
                 return;
             }
+            
+            const startDate = toIsoDateString(dateRange[0]);
+            const endDate = toIsoDateString(dateRange[1]);
 
             const data = await fetchGraphData(channel, granularity, startDate, endDate);
             setGraphData(data);
@@ -155,9 +147,9 @@ export function InteractiveAreaChart({ dateRange, fetchURL, channel, dataKey, se
                     <Group className={styles.mainWidget}>
                         <Skeleton visible={isLoadingGraph}>
                             <Stack className={styles.innerGroup} gap="xs">
-                                <Text size="xl" ta="left" className={styles.title}> {granularity ? title+' / '+granularity: title} </Text>
+                                <Text size="sm" ta="left" className={styles.title}> {granularity ? title+' / '+granularity: title} </Text>
                                 {style == 'Area' ? (<AreaChart data={smoothedData} dataKey={dataKey} series={series} valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
-                                    className={styles.chart} withLegend withDots={false} unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} areaChartProps={{ syncId: 'msgs' }}
+                                    classNames={{root: styles.chart, legend: styles.textLabel}} withLegend withDots={false} unit={unit} type={type} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} areaChartProps={{ syncId: 'msgs' }}
                                 />) :
                                     (<BarChart data={smoothedData} dataKey={dataKey} series={series} withLegend valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)} xAxisProps={{ dataKey: "date", tickFormatter: (tick) => formatXAxis(tick, granularity) }} yAxisProps={{ domain: [yMin, yMax] }} className={styles.chart} unit={unit} barChartProps={{ syncId: 'msgs' }} />)}
                             </Stack>

@@ -2,7 +2,7 @@ import { ActionIcon, Button, Group, Paper, Select, Stack, Text, TextInput, Toolt
 import { DatePickerInput } from "@mantine/dates";
 import styles from './RustlogImport.module.css';
 import { useEffect, useState } from "react";
-import { getData, postData } from "@/api/apiHelpers";
+import { getData, postData, toIsoDateString } from "@/api/apiHelpers";
 import { notifications } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
 
@@ -16,10 +16,7 @@ interface RustlogUserData {
     userID: string;
 }
 
-const formatDate = (date: Date | null): string | null => {
-    if (!date) return null;
-    return date.toISOString().split('T')[0];
-};
+
 
 async function checkAndFetchChannels(url: string): Promise<{ valid: boolean, channels: string[] }> {
     try {
@@ -75,13 +72,15 @@ export function RustlogImport({ setTicketID, setIsPolling }: RustlogImportProps)
     };
 
     const handleClick = async () => {
-        const startDate = formatDate(dateRange[0]);
-        const endDate = formatDate(dateRange[1] ? dateRange[1] : dateRange[0]);
 
-        if (!startDate || !endDate) {
+        if (!dateRange[0] || !dateRange[1]) {
             console.error('Both start date and end date must be selected.');
             return;
         }
+
+        const startDate = toIsoDateString(dateRange[0]);
+        const endDate = toIsoDateString(dateRange[1] ? dateRange[1] : dateRange[0]);
+
         if (!channelName) {
             console.error('Channel name must be selected.');
             return;
@@ -115,6 +114,7 @@ export function RustlogImport({ setTicketID, setIsPolling }: RustlogImportProps)
                 </Text>
                 <Group align={"flex-end"} className={styles.paramsGroup}>
                     <TextInput
+                        classNames={{ label: styles.selectLabel }}
                         label={"Repository"}
                         value={repoName}
                         onChange={handleRepoNameChange} // Use the handler that resets validation
@@ -128,6 +128,7 @@ export function RustlogImport({ setTicketID, setIsPolling }: RustlogImportProps)
                         }
                     />
                     <Select
+                        classNames={{ label: styles.selectLabel }}
                         label="Channel Name"
                         placeholder="Select channel"
                         value={channelName}
@@ -137,13 +138,15 @@ export function RustlogImport({ setTicketID, setIsPolling }: RustlogImportProps)
                         nothingFoundMessage={'No channels found'}
                     />
                     <DatePickerInput
+                        classNames={{ label: styles.selectLabel }}
                         label={"Time Range"}
                         type={'range'}
                         value={dateRange}
                         onChange={setDateRange}
                         allowSingleDateInRange
                     />
-                    <Button onClick={handleClick}>
+                    <Button onClick={handleClick} classNames={{ label: styles.submitLabel }}
+                    >
                         Submit
                     </Button>
                 </Group>

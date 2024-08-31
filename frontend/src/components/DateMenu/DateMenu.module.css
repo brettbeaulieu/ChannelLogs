@@ -1,4 +1,6 @@
-.dateRoot {}
+.dateRoot {
+    width: 100%;
+}
 
 .button {
     background-color: var(--mantine-color-body);
@@ -6,6 +8,12 @@
     border-width: 1px;
     border-color: var(--mantine-color-default-border);
     color: var(--mantine-color-text);
+    width: 100%;
+}
+
+.textLabel {
+    font-weight: 300;
+    text-transform: uppercase;
 }
 
 .dropdown {

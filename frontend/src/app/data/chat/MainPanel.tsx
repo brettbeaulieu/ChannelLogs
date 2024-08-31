@@ -1,9 +1,9 @@
 // pages/page.js
 'use client';
 
-import { deleteData, getData, patchData } from '@/api/apiHelpers';
+import { getData } from '@/api/apiHelpers';
 import { FileData } from '@/app/data/chat/components/FileTable/FileTable';
-import { Group, Paper, Stack, Text } from '@mantine/core';
+import { Group, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useCallback, useEffect, useState } from 'react';
 import { FileTable, FileUpload, RustlogImport } from './components';
@@ -55,7 +55,7 @@ export default function MainPanel() {
           console.error('Error polling task status:', error);
           setIsPolling(false); // Stop polling on error
         }
-      }, 2000); // Poll every 2 seconds
+      }, 3000); // Poll every 3 seconds
     }
 
     // Cleanup function to clear the interval
@@ -81,27 +81,21 @@ export default function MainPanel() {
   return (
     <Stack className={styles.mainStack}>
 
-      <Paper className={styles.top_paper}>
-        <Group justify={'center'} gap={"sm"}>
-          <FileUpload fetchFiles={fetchFiles} />
-          <RustlogImport setTicketID={setTicketID} setIsPolling={setIsPolling} />
-        </Group>
-      </Paper>
 
-      <Paper className={styles.paper}>
-        <Group>
-          <Text size="lg" style={{ margin: '1rem' }}>
-            Uploaded Files ({files.length})
-          </Text>
-        </Group>
+      <Group className={styles.topGroup}>
+        <FileUpload fetchFiles={fetchFiles} />
+        <RustlogImport setTicketID={setTicketID} setIsPolling={setIsPolling} />
+      </Group>
 
+      <Group className={styles.botGroup}>
         <FileTable
           files={files}
           fetchFiles={fetchFiles}
           setTicketID={setTicketID}
           setIsPolling={setIsPolling}
         />
-      </Paper>
+      </Group>
+
 
     </Stack>
   );

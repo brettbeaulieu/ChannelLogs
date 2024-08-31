@@ -1,14 +1,23 @@
 .rootPaper {
     border-radius: 0px;
-    height: 48%;
+    height: 56%;
 }
 
 .skeleton {
     height: 100%;
 }
 
+.table,
+.tbody,
 .scrollContainer {
     height: 100%;
 }
 
-.table {}
+@media (max-width: 768px) {
+
+    .scrollContainer,
+    .table,
+    .tbody {
+        height: 100%;
+    }
+}

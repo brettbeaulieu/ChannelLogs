@@ -1,5 +1,6 @@
 .table {
   width: 100%;
+  max-height: 50vh;
   background-color: var(--mantine-color-default);
   color: var(--mantine-text-color);
 }
@@ -11,14 +12,9 @@
   color: var(--mantine-text-color);
 }
 
-.drawer {
-  pointer-events: none;
-  box-shadow: none;
-}
-
-
 .fileHeader {
   text-align: left;
+  cursor: pointer;
   padding: var(--mantine-spacing-md);
 }
 
@@ -27,9 +23,33 @@
   padding: var(--mantine-spacing-md);
 }
 
+.filesHeader {
+  margin: var(--mantine-spacing-md);
+  margin-bottom: 0px;
+  margin-right: 0px;
+}
+
+.fileHeader:hover, .actionHeader:hover {
+  background-color: var(--mantine-color-default-hover); /* Light tint on hover */
+}
+
+
+.sortIcon {
+  margin-left: 1rem; /* Space between text and icon */
+  align-items: center;
+}
+
+
+.drawer {
+  pointer-events: none;
+  box-shadow: none;
+}
+
+
 .tbody {
   background-color: var(--mantine-color-default);
   color: var(--mantine-text-color);
+
 }
 
 .tr {
@@ -64,11 +84,6 @@
   /* Adjust spacing between file name and action buttons */
 }
 
-.Group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
 .actionGroup {
   background-color: var(--mantine-color-default-hover);
@@ -90,13 +105,21 @@
   background-color: var(--mantine-color-blue-light);
 }
 
+
+
+.mainPaper {
+  width: 100%;
+  height: 100%;
+  margin: var(--mantine-spacing-md);
+  border-radius: 0px;
+}
+
 @media (max-width: 768px) {
   .table {
-    width: 100%;
-    margin-bottom: 15vh;
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
   }
   .tbody {
-    width: 100%;
-
   }
 }

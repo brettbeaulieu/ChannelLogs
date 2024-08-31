@@ -10,7 +10,8 @@ const fixedData = [
     label: 'Chat',
     icon: IconMessage,
     links: [
-      { label: 'Dashboard', link: '/analytics/chat/dashboard' }
+      { label: 'Dashboard', link: '/analytics/chat/dashboard' },
+      { label: 'Viewer', link: '/analytics/chat/viewer'}
     ]
   },
   {

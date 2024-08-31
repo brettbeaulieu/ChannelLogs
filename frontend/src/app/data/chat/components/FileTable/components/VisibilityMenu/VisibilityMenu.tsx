@@ -1,6 +1,6 @@
-import { Menu, Button, Group, Switch, Text } from "@mantine/core";
+import { Menu, Button, Group, Switch, Text, Tooltip } from "@mantine/core";
 import { IconSettings } from "@tabler/icons-react";
-import { useState } from "react";
+import styles from './VisibilityMenu.module.css';
 
 export interface VisibilityMenuProps {
     visibleColumns: Record<any, boolean>;
@@ -14,9 +14,11 @@ export function VisibilityMenu({ visibleColumns, handleVisibilityChange }: Visib
 
     return (<Menu>
         <Menu.Target>
-            <Button color="gray" variant="subtle">
-                <IconSettings size={16} />
-            </Button>
+            <Tooltip label={"Set Visible Headers"}>
+                <Button color="gray" variant="subtle" className={styles.button}>
+                    <IconSettings height={16} width={16} />
+                </Button>
+            </Tooltip>
         </Menu.Target>
         <Menu.Dropdown>
             <Menu.Item>
@@ -26,6 +28,15 @@ export function VisibilityMenu({ visibleColumns, handleVisibilityChange }: Visib
                         onChange={(e) => handleVisibilityChange('filename', e.currentTarget.checked)}
                     />
                     <Text>File Name</Text>
+                </Group>
+            </Menu.Item>
+            <Menu.Item>
+                <Group>
+                    <Switch
+                        checked={visibleColumns.channel}
+                        onChange={(e) => handleVisibilityChange('channel', e.currentTarget.checked)}
+                    />
+                    <Text>Channel</Text>
                 </Group>
             </Menu.Item>
             <Menu.Item>

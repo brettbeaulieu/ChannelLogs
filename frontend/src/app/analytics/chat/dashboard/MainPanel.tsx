@@ -40,7 +40,7 @@ export default function MainPanel() {
 
           <Group className={styles.mainGroup}>
 
-            <Stack className={styles.mainstack1} justify='flex-start'>
+            <Stack className={styles.mainstack1} justify='space-between'>
               <StatsGrid channel={channel} dateRange={dateRange} />
               <InteractiveAreaChart
                 dateRange={dateRange}
@@ -70,7 +70,7 @@ export default function MainPanel() {
               />
             </Stack>
 
-            <Stack className={styles.mainstack2} justify='flex-start'>
+            <Stack className={styles.mainstack2} justify='space-between'>
               <InteractiveAreaChart
                 fetchURL={'chat/messages/sentiment_aggregate'}
                 channel={channel ? channel : ''}
@@ -78,11 +78,11 @@ export default function MainPanel() {
                 maPeriod={maPeriod}
                 granularity={granularity}
                 dateRange={dateRange}
-                series={[{ label: "Average Sentiment", name: 'value', color: 'bright' }]}
+                series={[{ label: "Normalized Sentiment", name: 'value', color: 'bright' }]}
                 dataKey={"date"}
                 type={"split"}
                 style={chartStyle}
-                title={"Average Sentiment"}
+                title={"Normalized Sentiment"}
                 yAxisRange={[-1, 1]}
               />
               <EmoteList channel={channel ? channel : ''} dateRange={dateRange} />
