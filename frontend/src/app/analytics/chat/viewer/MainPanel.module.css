@@ -4,7 +4,6 @@
   border-radius: 0px;
 }
 
-
 .mainPaper {
   height: 100%;
   padding: var(--mantine-spacing-md);
@@ -19,7 +18,8 @@
   border-collapse: collapse;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   padding: 8px;
   text-align: left;
   vertical-align: middle; /* Align text and images vertically */

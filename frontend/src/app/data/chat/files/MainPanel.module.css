@@ -25,8 +25,6 @@
   margin: var(--mantine-spacing-md);
 }
 
-
-
 .top_paper,
 .paper {
   background-color: var(--mantine-color-body);
@@ -44,5 +42,4 @@
 
   .topGroup {
   }
-
 }

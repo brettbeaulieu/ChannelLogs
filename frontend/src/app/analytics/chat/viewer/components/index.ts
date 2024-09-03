@@ -1,1 +1,1 @@
-export { ParametersGroup } from './ParametersGroup/ParametersGroup';
+export { ParametersGroup } from './ParametersGroup/ParametersGroup'

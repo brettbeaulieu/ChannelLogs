@@ -1,52 +1,51 @@
 .centered_header {
-    font-weight: 300;
-    font-size: large;
-    text-align: center;
+  font-weight: 300;
+  font-size: large;
+  text-align: center;
 }
 
 .inner_paper_stack {
-    height: 100%;
+  height: 100%;
 }
 
 .selectLabel {
-    font-weight: 300;
-    font-size: medium;
-    text-align: center;
+  font-weight: 300;
+  font-size: medium;
+  text-align: center;
 }
 
 .submitLabel {
-    font-weight: 500;
-    font-size: large;
-    text-align: center;
+  font-weight: 500;
+  font-size: large;
+  text-align: center;
 }
-
 
 .inner_paper {
-    display: flex;
-    justify-content: center;
-    margin: var(--mantine-spacing-md);
-    padding: var(--mantine-spacing-md);
-    width: 50%;
-    height: 100%;
-    border-radius: 0;
+  display: flex;
+  justify-content: center;
+  margin: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-md);
+  width: 50%;
+  height: 100%;
+  border-radius: 0;
 }
 
-@media (min-width: 769px) {}
+@media (min-width: 769px) {
+}
 
 @media (max-width: 768px) {
+  .inner_paper {
+    margin-top: 0px;
+  }
 
-    .inner_paper {
-        margin-top: 0px;
-    }
+  .inner_paper,
+  .inner_paper_stack {
+    height: 100%;
+    width: 100%;
+  }
 
-    .inner_paper,
-    .inner_paper_stack {
-        height: 100%;
-        width: 100%;
-    }
-
-    .paramsGroup {
-        justify-content: center;
-        width: 100%;
-    }
+  .paramsGroup {
+    justify-content: center;
+    width: 100%;
+  }
 }

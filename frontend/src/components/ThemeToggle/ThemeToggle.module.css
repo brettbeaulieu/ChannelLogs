@@ -1,25 +1,25 @@
 .theme_toggle {
-    display: flex;
-    justify-content: right;
-    background-color: var(--mantine-color-default-hover);
-    color: var(--text-color);
-    margin: 0.5rem;
+  display: flex;
+  justify-content: right;
+  background-color: var(--mantine-color-default-hover);
+  color: var(--text-color);
+  margin: 0.5rem;
 }
 
 .indicator {
-    background-color: var(--mantine-color-default);
-    color: var(--text-color);
+  background-color: var(--mantine-color-default);
+  color: var(--text-color);
 }
 
 .icon {
-    width: 1rem;
-    height: 1rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .icon_link_group {
-    gap: 10;
+  gap: 10;
 }
 
 .innerLabel {
-    color: var(--text-color);
+  color: var(--text-color);
 }

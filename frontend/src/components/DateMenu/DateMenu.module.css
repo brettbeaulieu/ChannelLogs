@@ -1,50 +1,48 @@
 .dateRoot {
-    width: 100%;
+  width: 100%;
 }
 
 .button {
-    background-color: var(--mantine-color-body);
-    border-style: solid;
-    border-width: 1px;
-    border-color: var(--mantine-color-default-border);
-    color: var(--mantine-color-text);
-    width: 100%;
+  background-color: var(--mantine-color-body);
+  border-style: solid;
+  border-width: 1px;
+  border-color: var(--mantine-color-default-border);
+  color: var(--mantine-color-text);
+  width: 100%;
 }
 
 .textLabel {
-    font-weight: 300;
-    text-transform: uppercase;
+  font-weight: 300;
+  text-transform: uppercase;
 }
 
 .dropdown {
-    border-radius: 1rem;
-    width: auto;
-    height: auto;
+  border-radius: 1rem;
+  width: auto;
+  height: auto;
 }
 
 .calendarHeader {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    max-width: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  max-width: 360px;
 }
 
 .calendarHeaderControl {
-    align-items: center;
-    width: 5rem;
-    justify-content: center;
-    display: flex;
+  align-items: center;
+  width: 5rem;
+  justify-content: center;
+  display: flex;
 }
 
 .month {
-    width: 360px;
+  width: 360px;
 }
 
 .calendarHeaderControlIcon {
-
 }
 
 .datePicker {
-
 }

@@ -29,27 +29,26 @@
   margin-right: 0px;
 }
 
-.fileHeader:hover, .actionHeader:hover {
-  background-color: var(--mantine-color-default-hover); /* Light tint on hover */
+.fileHeader:hover,
+.actionHeader:hover {
+  background-color: var(
+    --mantine-color-default-hover
+  ); /* Light tint on hover */
 }
-
 
 .sortIcon {
   margin-left: 1rem; /* Space between text and icon */
   align-items: center;
 }
 
-
 .drawer {
   pointer-events: none;
   box-shadow: none;
 }
 
-
 .tbody {
   background-color: var(--mantine-color-default);
   color: var(--mantine-text-color);
-
 }
 
 .tr {
@@ -61,7 +60,6 @@
 
   color: var(--mantine-text-color);
 }
-
 
 .fileCell {
   /* Fixed width for the file name column */
@@ -84,7 +82,6 @@
   /* Adjust spacing between file name and action buttons */
 }
 
-
 .actionGroup {
   background-color: var(--mantine-color-default-hover);
   border-radius: 0.5rem;
@@ -104,8 +101,6 @@
 .rowSelected {
   background-color: var(--mantine-color-blue-light);
 }
-
-
 
 .mainPaper {
   width: 100%;

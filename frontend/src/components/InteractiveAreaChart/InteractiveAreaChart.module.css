@@ -1,28 +1,28 @@
 .root {
-    width: 100%;
+  width: 100%;
 }
 
 .mainPaper {
-    border-radius: 0px;
+  border-radius: 0px;
 }
 
 .textLabel {
-    font-weight: 300;
+  font-weight: 300;
 }
 
 .chart {
-    height: 23vh;
-    width: 100%;
-    min-height: 100px;
-    min-width: 100px;
+  height: 23vh;
+  width: 100%;
+  min-height: 100px;
+  min-width: 100px;
 }
 
 .title {
-    margin-bottom: 0px;
-    font-weight: 300;
-    text-transform: uppercase;
+  margin-bottom: 0px;
+  font-weight: 300;
+  text-transform: uppercase;
 }
 
 .innerGroup {
-    padding: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-md);
 }

@@ -1,43 +1,43 @@
 .paramsPaper {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
-    justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  justify-content: center;
 }
 
 .paramsGroup {
-    justify-content: space-between;
+  justify-content: space-between;
 }
 
 .innerTextLabel {
-    font-weight: 300;
+  font-weight: 300;
 }
 
 .innerPaper {
-    padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
 }
 
 .textLabel {
-    font-weight: 400;
+  font-weight: 400;
 }
 
 .select,
 .checkbox {
-    display: flex;
-    height: 36px;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 @media (min-width: 769px) {
-    .innerPaper {
-        flex: 1;
-    }
+  .innerPaper {
+    flex: 1;
+  }
 }
 
 @media (max-width: 768px) {
-    .innerPaper{
-        width: 100%;
-    }
+  .innerPaper {
+    width: 100%;
+  }
 }

@@ -1,12 +1,9 @@
-"use client";
+'use client'
 
-import React from 'react';
-import { AppFrame } from '@/components/AppFrame/AppFrame';
-import MainPanel from './MainPanel';
-
+import React from 'react'
+import { AppFrame } from '@/components/AppFrame/AppFrame'
+import MainPanel from './MainPanel'
 
 export default function Page() {
-  return (
-    <AppFrame main={<MainPanel />} />
-  );
+  return <AppFrame main={<MainPanel />} />
 }

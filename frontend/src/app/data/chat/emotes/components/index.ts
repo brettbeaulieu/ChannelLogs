@@ -1,1 +1,1 @@
-export { EmoteSetTable } from './EmoteSetTable/EmoteSetTable';
+export { EmoteSetTable } from './EmoteSetTable/EmoteSetTable'

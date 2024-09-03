@@ -1,1 +1,1 @@
-export { VisibilityMenu } from './VisibilityMenu/VisibilityMenu';
+export { VisibilityMenu } from './VisibilityMenu/VisibilityMenu'
