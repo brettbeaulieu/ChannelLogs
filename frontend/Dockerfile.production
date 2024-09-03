@@ -1,0 +1,25 @@
+# Base image
+FROM node:18
+
+# Set the working directory
+WORKDIR /app
+
+# Set environment variable
+ENV NODE_ENV=production
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Build and start application in production mode
+RUN npm run build
+
+# Expose production port
+EXPOSE 3000
+
+CMD ["npm", "start"]

@@ -1,0 +1,43 @@
+.mainStack {
+  margin: var(--mantine-spacing-md);
+  max-height: 90vh;
+}
+
+.topGroup {
+  justify-content: space-between;
+}
+
+.top_paper {
+  margin: var(--mantine-spacing-md);
+}
+
+.topGroup,
+.botGroup {
+  margin: var(--mantine-spacing-md);
+}
+
+.paper {
+  margin: var(--mantine-spacing-md);
+}
+
+
+
+.top_paper,
+.paper {
+  background-color: var(--mantine-color-body);
+  border-radius: 0;
+  width: 100%;
+}
+
+@media (min-width: 769px) {
+}
+
+@media (max-width: 768px) {
+  .top_paper {
+    min-height: 60vh;
+  }
+
+  .topGroup {
+  }
+
+}

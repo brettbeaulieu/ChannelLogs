@@ -5,13 +5,14 @@ import { InteractiveAreaChart, StatsGrid } from "@/components";
 import { Group, Paper, Stack } from "@mantine/core";
 import { EmoteList, ParametersGroup } from './components';
 import styles from "./MainPanel.module.css";
+import { Channel } from '@/api';
 
 export default function MainPanel() {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
-  const [channel, setChannel] = useState<string | null>('');
+  const [channel, setChannel] = useState<Channel | undefined>(undefined);
   const [chartStyle, setChartStyle] = useState<string>("Area");
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([yesterday, today]);
   const [granularity, setGranularity] = useState<string | undefined>('Day');
@@ -45,7 +46,7 @@ export default function MainPanel() {
               <InteractiveAreaChart
                 dateRange={dateRange}
                 fetchURL={'chat/messages/message_count_aggregate'}
-                channel={channel ? channel : ''}
+                channel={channel}
                 dataKey={"date"}
                 series={[{ label: "Messages", name: 'value', color: 'bright' }]}
                 useMA={useMA}
@@ -57,7 +58,7 @@ export default function MainPanel() {
               />
               <InteractiveAreaChart
                 fetchURL={'chat/messages/unique_users_aggregate'}
-                channel={channel ? channel : ''}
+                channel={channel}
                 useMA={useMA}
                 maPeriod={maPeriod}
                 granularity={granularity}
@@ -73,7 +74,7 @@ export default function MainPanel() {
             <Stack className={styles.mainstack2} justify='space-between'>
               <InteractiveAreaChart
                 fetchURL={'chat/messages/sentiment_aggregate'}
-                channel={channel ? channel : ''}
+                channel={channel}
                 useMA={useMA}
                 maPeriod={maPeriod}
                 granularity={granularity}
@@ -85,7 +86,7 @@ export default function MainPanel() {
                 title={"Normalized Sentiment"}
                 yAxisRange={[-1, 1]}
               />
-              <EmoteList channel={channel ? channel : ''} dateRange={dateRange} />
+              <EmoteList channel={channel} dateRange={dateRange} />
             </Stack >
 
           </Group>

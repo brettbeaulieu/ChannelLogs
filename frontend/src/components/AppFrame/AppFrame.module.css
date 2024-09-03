@@ -1,0 +1,37 @@
+.control {
+    display: block;
+    padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+    border-radius: 0px;
+    font-weight: 500;
+
+    
+
+}
+.control:hover {
+    background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+}
+
+
+.headerGroup {
+    width: 100%;
+    justify-content: space-between;
+}
+
+.navbar {
+    border: 0px;
+    padding-left: 0px;
+    justify-content: space-between;
+}
+
+.navbar.opened {
+    transition-duration: 500ms;
+}
+
+.navbar.closed {
+    transform: translateY(calc(100%*-1));
+    transition-duration: 500ms;
+}
+
+.header {
+    z-index: 102;
+}

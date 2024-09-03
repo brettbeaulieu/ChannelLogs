@@ -1,19 +1,39 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { BASE_URL } from "./endpoints";
+import { Message } from "./model_interfaces";
+
+// Object creation
+
+export function createMessageFromData(apiData: any): Message {
+    return {
+        id: apiData.id,
+        parent_log: apiData.parent_log,
+        timestamp: new Date(apiData.timestamp),
+        username: apiData.username,
+        message: apiData.message,
+        emotes: apiData.emotes,
+        sentiment_score: apiData.sentiment_score,
+    };
+}
+
+
+
+// Request Helpers
 
 async function requestData(method: string, prefix: string, data: FormData | null = null, jsonFormat = true, params = {}) {
     // Build query string from params object
     const queryString = new URLSearchParams(params).toString();
-    const urlWithArgs = queryString ? `${BASE_URL}/${prefix}/?${queryString}` : `${BASE_URL}/${prefix}`;
+    const urlWithArgs = queryString ? `${BASE_URL}/${prefix}?${queryString}` : `${BASE_URL}/${prefix}`;
 
     // Determine the request body and headers
-    let body = null;
-    let headers = {'Content-Type': ''};
+    let body: BodyInit | null = null;
+    let headers: HeadersInit = new Headers();
+
 
     if (data) {
         if (jsonFormat) {
             // Handle JSON formatting
             body = JSON.stringify(data);
-            headers['Content-Type'] = 'application/json';
+            headers.append('Content-Type', 'application/json');
         } else {
             body = data;
         }
@@ -30,7 +50,6 @@ async function requestData(method: string, prefix: string, data: FormData | null
     return response;
 }
 
-// Wrapper functions
 export async function getData(prefix: string, params = {}) {
     return requestData('GET', prefix, null, false, params);
 }
@@ -68,6 +87,5 @@ export function parseFormatDateTime(dateString: string) {
 }
 
 export function toIsoDateString(date: Date | null): string {
-    if (!date) return '';
-    return date.toISOString().split('T')[0];
+    return date ? date.toISOString().split('T')[0]: '';
 }

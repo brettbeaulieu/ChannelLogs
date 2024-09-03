@@ -1,13 +1,14 @@
 import json
 
 import requests
+from django.forms.models import model_to_dict
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import HttpRequest
 from rest_framework.response import Response
 from django.utils.dateparse import parse_datetime
 
-from ..models import ChatFile, Task
+from ..models import Channel, ChatFile, Task, get_default_channel
 from ..serializers import ChatFileSerializer
 from ..tasks import get_rustlog_task, preprocess_task
 
@@ -17,28 +18,31 @@ class ChatFileViewSet(viewsets.ModelViewSet):
     serializer_class = ChatFileSerializer
 
     def create(self, request: HttpRequest, *args, **kwargs):
-        # File size validation
         files = request.FILES.getlist("files")
-
         if not files:
             return Response(
                 {"error": "No file(s) uploaded"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         file_objs = []
+
         for file in files:
             # Prepare the data for each file
             chat_log_data = {
                 "file": file,
                 "filename": request.data.get("filename", file.name.split("/")[-1]),
-                "channel": "None",
                 "is_preprocessed": request.data.get("is_preprocessed", False),
                 "metadata": request.data.get("metadata", None),
             }
 
             # Create a ChatLog instance
-            serializer = self.get_serializer(data=chat_log_data)
+            print("Making serializer")
+            try:
+                serializer = self.get_serializer(data=chat_log_data)
+            except Exception as e:
+                print(f"Error: {e}")
             serializer.is_valid(raise_exception=True)
+
             self.perform_create(serializer)
             file_objs.append(serializer.data)
 
@@ -47,27 +51,19 @@ class ChatFileViewSet(viewsets.ModelViewSet):
             {"files": file_objs}, status=status.HTTP_201_CREATED, headers=headers
         )
 
-    def update(self, request: HttpRequest, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
+    def partial_update(self, request, *args, **kwargs):
+        ref_instance = self.get_object()
+        
+        channel = dict(request.POST)
+        formatted = {"channel": json.loads(channel["channel"][0])}
 
-        # Ensure the update method correctly handles file and filename updates
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=partial, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
+        ref_instance.channel = Channel.objects.get(id=formatted["channel"]['id'])
+        ref_instance.save()
 
-    def perform_update(self, serializer):
-        serializer.save()
+        ref_serializer = self.get_serializer() 
 
-    def list(self, request: HttpRequest, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(
-            queryset, many=True, context={"request": request}
-        )
-        return Response({"files": serializer.data})
+        headers = self.get_success_headers(ref_serializer.data)
+        return Response(ref_serializer.data, status=status.HTTP_200_OK, headers=headers)
 
     @action(detail=False, methods=["delete"])
     def delete_all(self, request: HttpRequest, *args, **kwargs):
@@ -199,8 +195,3 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
         # Return the JSON data or an empty dictionary if no data
         return Response({"data": data})
-
-    @action(detail=False, methods=["get"])
-    def get_all_channels(self, request, *args, **kwargs):
-        objects = ChatFile.objects.all()
-        return Response({"names": {x["channel"] for x in objects.values()}}, status=status.HTTP_200_OK)

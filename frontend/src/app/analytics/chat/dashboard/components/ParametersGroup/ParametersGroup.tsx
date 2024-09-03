@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { Checkbox, Group, NumberInput, Paper, SegmentedControl, Select, Stack, Text } from '@mantine/core';
 import styles from './ParametersGroup.module.css';
 import { DateMenu } from '@/components';
 import { getData } from '@/api/apiHelpers';
+import { Channel, CHANNELS_URL } from '@/api';
 
 type SetStateAction<T> = React.Dispatch<React.SetStateAction<T>>;
 
 interface ParametersGroupProps {
-    channel: string | null;
-    setChannel: SetStateAction<string | null>;
+    channel: Channel | undefined;
+    setChannel: SetStateAction<Channel | undefined>;
 
     granularity: string | undefined;
     setGranularity: SetStateAction<string | undefined>;
@@ -43,15 +44,15 @@ export function ParametersGroup({
 }: ParametersGroupProps) {
 
 
-    const [channelList, setChannelList] = useState<string[]>([]);
+    const [channelList, setChannelList] = useState<Channel[]>([]);
 
     // Fetch channel list when component mounts
     useEffect(() => {
         async function fetchChannelList() {
             try {
-                const response = await getData('chat/files/get_all_channels');
-                const data = await response.json();
-                setChannelList(data.names);
+                const response = await getData(CHANNELS_URL);
+                const data: Channel[] = await response.json();
+                setChannelList(data);
             } catch (error) {
                 console.error('Failed to fetch channel list', error);
             }
@@ -61,85 +62,81 @@ export function ParametersGroup({
     }, []); // Empty dependency array means this runs only once
 
 
+    const buildOption = (text: string, element: ReactElement): ReactElement => {
+        return (
+            <Paper withBorder className={styles.innerPaper}>
+                <Stack>
+                    <Text ta="center" className={styles.textLabel}>{text}</Text>
+                    {element}
+                </Stack>
+            </Paper>
+        )
+    }
+
+    const handleChannelOnChange = (newName: string | null): void => {
+        if (newName) {
+            const obj = channelList.find((x) => x.name == newName);
+            setChannel(obj);
+        }
+    }
+
 
     return (
         <Paper className={styles.paramsPaper}>
+
             <Group className={styles.paramsGroup}>
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Channel</Text>
-                        <Select
-                            classNames={{ label: styles.innerTextLabel }}
-                            data={channelList}
-                            value={channel}
-                            onChange={setChannel}
-                            searchable
-                        />
+                {buildOption("Channel",
+                    <Select
+                        classNames={{ label: styles.innerTextLabel }}
+                        data={channelList.map((elem: Channel) => elem.name)}
+                        value={channel ? channel.name : ''}
+                        onChange={handleChannelOnChange}
+                        searchable
+                    />)}
+                {buildOption("Date Range",
+                    <DateMenu
+                        dateRange={dateRange}
+                        dateChange={setDateRange}
+                    />)}
+                {buildOption("Granularity",
+                    <SegmentedControl
 
-                    </Stack>
-                </Paper>
-
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Date Range</Text>
-                        <DateMenu
-                            dateRange={dateRange}
-                            dateChange={setDateRange}
-                        />
-                    </Stack>
-                </Paper>
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Granularity</Text>
-                        <SegmentedControl
-
-                            value={granularity}
-                            onChange={setGranularity}
-                            data={['Minute', 'Hour', 'Day', 'Week', 'Month']}
-                            classNames={{ root: styles.select, label: styles.innerTextLabel }}
-                            fullWidth
-                        />
-                    </Stack>
-                </Paper>
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Chart Type</Text>
-                        <SegmentedControl
-                            classNames={{ label: styles.innerTextLabel }}
-                            value={chartStyle}
-                            onChange={setChartStyle}
-                            data={['Area', 'Bar']}
-                            className={styles.select}
-                            fullWidth
-                        />
-                    </Stack>
-                </Paper>
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Use MA</Text>
-                        <Checkbox
-                            checked={useMA}
-                            onChange={(event) => setUseMA(event.currentTarget.checked)}
-                            className={styles.checkbox}
-                            data-testid="enable-ma-checkbox"
-                        />
-                    </Stack>
-                </Paper>
-
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>MA Period</Text>
-                        <NumberInput
-                            value={maPeriod}
-                            onChange={(value) => setMAPeriod(value)}
-                            min={1}
-                            max={1000}
-                            step={1}
-                            className={styles.numberInput}
-                            data-testid="ma-period-input"
-                        />
-                    </Stack>
-                </Paper>
+                        value={granularity}
+                        onChange={setGranularity}
+                        data={['Minute', 'Hour', 'Day', 'Week', 'Month']}
+                        classNames={{ root: styles.select, label: styles.innerTextLabel }}
+                        fullWidth
+                    />
+                )}
+                {buildOption("Chart Type",
+                    <SegmentedControl
+                        classNames={{ label: styles.innerTextLabel }}
+                        value={chartStyle}
+                        onChange={setChartStyle}
+                        data={['Area', 'Bar']}
+                        className={styles.select}
+                        fullWidth
+                    />
+                )}
+                {buildOption("Use MA",
+                    <Checkbox
+                        checked={useMA}
+                        onChange={(event) => setUseMA(event.currentTarget.checked)}
+                        className={styles.checkbox}
+                        data-testid="enable-ma-checkbox"
+                    />
+                )}
+                {buildOption("MA Period",
+                    <NumberInput
+                        value={maPeriod}
+                        onChange={(value) => setMAPeriod(value)}
+                        min={1}
+                        max={1000}
+                        step={1}
+                        className={styles.numberInput}
+                        data-testid="ma-period-input"
+                    />
+                )}
             </Group>
         </Paper>
     );

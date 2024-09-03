@@ -2,6 +2,7 @@ import { getData, toIsoDateString } from "@/api/apiHelpers";
 import { Paper, Table, Image, Skeleton, Text } from "@mantine/core";
 import { ReactElement, useCallback, useEffect, useState } from "react";
 import styles from './EmoteList.module.css';
+import { Channel } from "@/api";
 
 const api_string = "https://cdn.7tv.app/emote/";
 
@@ -12,7 +13,7 @@ interface Element {
 }
 
 interface EmoteListProps {
-    channel: string;
+    channel: Channel | undefined;
     dateRange: [Date | null, Date | null];
 }
 
@@ -47,7 +48,7 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
             const startDate = toIsoDateString(dateRange[0]);
             const endDate = toIsoDateString(dateRange[1]);
 
-            const response = await getData('chat/messages/popular_emotes', { channel: channel, start_date: startDate, end_date: endDate });
+            const response = await getData('chat/messages/popular_emotes', { channel: channel.id, start_date: startDate, end_date: endDate });
             const data: Element[] = await response.json();
             const temp_rows: ReactElement[] = buildItems(data);
             setRows(temp_rows);

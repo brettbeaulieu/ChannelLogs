@@ -1,0 +1,26 @@
+# Dockerfile.dev
+FROM node:18
+
+# Set the working directory
+WORKDIR /app
+
+# Set environment variable
+ENV NODE_ENV=development
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Expose development ports
+EXPOSE 3000
+EXPOSE 49153
+
+# Start application in development mode
+CMD ["npm", "run", "dev"]

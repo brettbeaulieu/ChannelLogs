@@ -2,7 +2,7 @@ import re
 from collections import Counter
 from transformers import pipeline
 
-from ..models import ChatFile, Emote, EmoteSet, MessageEmote, Message
+from ..models import ChatFile, EmoteSet, Message, MessageEmote
 
 # Constants
 CREATE_PREFIX = "bulk_create/"
@@ -100,9 +100,9 @@ def count_emotes_in_msg(message: str, emote_names: list[str]) -> dict[str, int]:
     return emote_counts
 
 
-def get_emote_list(emoteSetName):
-    return Emote.objects.filter(parent_set__name=emoteSetName)
-
+def get_emote_set(emoteSetName):
+    emote_set = EmoteSet.objects.get(name=emoteSetName)
+    return emote_set.emotes.all()
 
 def filter_emotes_from_message(message):
     """Remove any emotes from the message"""
@@ -139,8 +139,8 @@ def preprocess_log(
 
     # Get emote set, if emotes anbled
     if useEmotes:
-        emoteList = get_emote_list(emoteSetName)
-        emote_names = [x.name for x in emoteList]
+        emoteSetObj = get_emote_set(emoteSetName)
+        emote_names = [x.name for x in emoteSetObj]
     else:
         emote_names = []
 
@@ -205,17 +205,25 @@ def preprocess_log(
         # Extract user and remove it from the data dictionary
 
         # Create a Message instance with the remaining data
-        message = Message(parent_log=parent_log, username=user_data["username"], timestamp=user_data["timestamp"], message=user_data["message"], sentiment_score=user_data["sentiment_score"])
+        if useSentiment:
+            message = Message(parent_log=parent_log, username=user_data["username"], timestamp=user_data["timestamp"], message=user_data["message"], sentiment_score=user_data["sentiment_score"])
+        else:
+            message = Message(parent_log=parent_log, username=user_data["username"], timestamp=user_data["timestamp"], message=user_data["message"])
+
         messages_to_create.append(message)
 
-        emotes = user_data.get("emotes", {})
-        for emote_name, count in emotes.items():
-            emote_obj = Emote.objects.get(name=emote_name, parent_set=EmoteSet.objects.get(name=emoteSetName))
-            message_emotes_to_create.append(MessageEmote(
-                message=message,
-                emote=emote_obj,
-                count=count
-            ))
+        message.save()
+        if useEmotes:
+            emotes = user_data.get("emotes", {})
+            for emote_name, count in emotes.items():
+                emote_obj =  emoteSetObj.get(name=emote_name)
+                message_emotes_to_create.append(MessageEmote(
+                    message=message,
+                    emote=emote_obj,
+                    count=count
+                ))
+
     # Insert messages in bulk
-    Message.objects.bulk_create(messages_to_create)
-    MessageEmote.objects.bulk_create(message_emotes_to_create)
+    Message.objects.bulk_create(messages_to_create, ignore_conflicts=True)
+    if useEmotes:
+        MessageEmote.objects.bulk_create(message_emotes_to_create, ignore_conflicts=True)

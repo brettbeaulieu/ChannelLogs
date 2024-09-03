@@ -3,6 +3,7 @@ import { Group, NumberFormatter, Paper, SimpleGrid, Skeleton, Stack, Text } from
 import { IconMessage, IconUser } from '@tabler/icons-react'; // Adjust imports if necessary
 import styles from './StatsGrid.module.css';
 import { getData, toIsoDateString } from '@/api/apiHelpers';
+import { Channel, MESSAGES_URL } from '@/api';
 
 export interface DataStruct {
     idx: number;
@@ -11,7 +12,7 @@ export interface DataStruct {
 }
 
 export interface StatsGridProps {
-    channel: string | null;
+    channel: Channel | undefined;
     dateRange: [Date | null, Date | null];
 }
 
@@ -48,9 +49,9 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
         )
     }, []);
 
-    const fetchUserData = useCallback(async (startDate: string, endDate: string) => {
+    const fetchUserData = useCallback(async (channel: Channel, startDate: string, endDate: string) => {
         try {
-            const response = await getData('chat/messages/unique_users', { channel: channel, start_date: startDate, end_date: endDate });
+            const response = await getData(`${MESSAGES_URL}unique_users`, { channel: channel.id, start_date: startDate, end_date: endDate });
             const data = await response.json();
             // Assuming the data is { value: x }
             return {
@@ -66,11 +67,11 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
                 value: 0,
             };
         }
-    }, [channel]);
+    }, []);
 
-    const fetchMessageData = useCallback(async (startDate: string, endDate: string) => {
+    const fetchMessageData = useCallback(async (channel: Channel, startDate: string, endDate: string) => {
         try {
-            const response = await getData('chat/messages/message_count', { channel: channel, start_date: startDate, end_date: endDate });
+            const response = await getData(`${MESSAGES_URL}message_count`, { channel: channel.id, start_date: startDate, end_date: endDate });
             const data = await response.json();
             // Assuming the data is { value: x }
             return {
@@ -86,7 +87,7 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
                 value: 0,
             };
         }
-    }, [channel]);
+    }, []);
 
     useEffect(() => {
         const updateStats = async () => {
@@ -99,8 +100,8 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
             const endDate = toIsoDateString(dateRange[1]);
 
             try {
-                const userResponse = await fetchUserData(startDate, endDate);
-                const msgsResponse = await fetchMessageData(startDate, endDate);
+                const userResponse = await fetchUserData(channel, startDate, endDate);
+                const msgsResponse = await fetchMessageData(channel, startDate, endDate);
                 setMsgData(msgsResponse)
                 setUserData(userResponse)
             } catch (error) {

@@ -9,8 +9,8 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from ..common import GRANULARITY
-from ..models import Message, MessageEmote
-from ..serializers import DateTimeSerializer, MessageSerializer
+from ..models import ChatFile, Emote, Message, MessageEmote
+from ..serializers import MessageSerializer
 
 
 # Common Functions
@@ -90,17 +90,21 @@ def normalize(data):
 
 def get_emote_sums(channel, start_date, end_date):
     # Filter messages between the two timestamps
+    channel_logs = ChatFile.objects.filter(channel=channel)
+
+    # Retrieve Message objects associated with the Channel's ChatFiles in the date range
     messages = Message.objects.filter(
-        timestamp__range=[start_date, end_date], parent_log__channel=channel
+        parent_log__in=channel_logs,
+        timestamp__range=[start_date, end_date]
     )
 
-    # Get the emote occurrences in these messages
-    emote_occurrences = (
-        MessageEmote.objects.filter(message__in=messages)
-        .values("emote__emote_id", "emote__name")
-        .annotate(total_count=Sum("count"))
-        .order_by("emote__name")
-    )
+    # Retrieve MessageEmote objects associated with the filtered messages,
+    # and sum counts
+    emote_occurrences = MessageEmote.objects.filter(
+        message__in=messages
+    ).values('emote__name', 'emote__emote_id').annotate(
+        total_count=Sum('count')
+    ).order_by('-total_count')
 
     # Convert the result to a dictionary for easier usage
     emote_count_by_name = [
@@ -175,11 +179,10 @@ def aggregate_data(request, aggregate_func, response_key, doNormalize=False):
 class MessageFilter(filters.FilterSet):
     start_date = filters.DateTimeFilter(field_name="timestamp", lookup_expr="gte")
     end_date = filters.DateTimeFilter(field_name="timestamp", lookup_expr="lte")
-    channel = filters.CharFilter(field_name="parent_log__channel", lookup_expr="exact")
 
     class Meta:
         model = Message
-        fields = ["start_date", "end_date", "channel"]
+        fields = ["start_date", "end_date"]
 
 
 class MessagePagination(PageNumberPagination):
@@ -223,18 +226,6 @@ class MessageViewSet(viewsets.ModelViewSet):
         response = aggregate_data(request, Count("id"), "value")
         data = response.data
         return Response(calculate_running_sum(data), status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"])
-    def get_earliest_date(self, request):
-        channel = request.query_params.get("channel")
-        # TODO: MAKE SURE THIS REFERENCES CHANNEL
-        earliest_date = Message.objects.aggregate(
-            earliest_date=Min("timestamp"), channel=channel
-        )["earliest_date"]
-        serializer = DateTimeSerializer(data={"date": earliest_date})
-        if serializer.is_valid():
-            return Response(serializer.validated_data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"])
     def message_count(self, request):

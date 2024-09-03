@@ -2,7 +2,7 @@ import requests
 from ..models import Emote, EmoteSet
 
 
-def build_emote_set(set_id: str):
+def build_emote_set(set_id: str) -> None:
     response = requests.get(f"http://7tv.io/v3/emote-sets/{set_id}")
     if response.status_code != 200:
         raise ConnectionError("Couldn't recover emote set, it may not exist.")
@@ -11,7 +11,6 @@ def build_emote_set(set_id: str):
 
     # First create parent EmoteSet
     obj = EmoteSet.objects.create(name=data["name"], set_id=set_id)
-    obj.save()
 
     # Use a dictionary to store unique emotes by their emote_id
     unique_emotes = {}
@@ -20,7 +19,6 @@ def build_emote_set(set_id: str):
         # Store only the first occurrence of each emote_id
         if emote_id not in unique_emotes:
             unique_emotes[emote_id] = {
-                "parent_set": obj,
                 "name": emote_dict["name"],
                 "emote_id": emote_id,
             }
@@ -29,3 +27,5 @@ def build_emote_set(set_id: str):
     emotes_list = [
         Emote.objects.create(**emote_data) for emote_data in unique_emotes.values()
     ]
+
+    obj.emotes.set(emotes_list)  # Set the emotes for this EmoteSet

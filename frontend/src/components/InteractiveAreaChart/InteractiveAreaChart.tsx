@@ -3,6 +3,7 @@ import { Group, Paper, Skeleton, Stack, Text } from '@mantine/core';
 import styles from './InteractiveAreaChart.module.css';
 import { AreaChart, AreaChartType, BarChart } from '@mantine/charts';
 import { getData, toIsoDateString } from '@/api/apiHelpers';
+import { Channel } from '@/api';
 
 interface GraphItem {
     date: string;
@@ -19,7 +20,7 @@ export interface SeriesStruct {
 export interface ChartProps {
     dateRange: [Date | null, Date | null];
     fetchURL: string;
-    channel: string;
+    channel: Channel | undefined;
     dataKey: string;
     series: SeriesStruct[];
     useMA: boolean;
@@ -96,10 +97,10 @@ export function InteractiveAreaChart({ dateRange, fetchURL, channel, dataKey, se
     const [graphData, setGraphData] = useState<GraphItem[]>([]);
     const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(false);
 
-    const fetchGraphData = useCallback(async (channel: string, granularity: string, startDate: string, endDate: string) => {
+    const fetchGraphData = useCallback(async (channel: Channel, granularity: string, startDate: string, endDate: string) => {
         granularity = granularity.toLowerCase().replace(/\s+/g, '') || 'day';
         try {
-            const response = await getData(fetchURL, { channel, granularity, start_date: startDate, end_date: endDate });
+            const response = await getData(fetchURL, { channel: channel.id, granularity, start_date: startDate, end_date: endDate });
             const data = await response.json();
             return data;
         } catch (error) {

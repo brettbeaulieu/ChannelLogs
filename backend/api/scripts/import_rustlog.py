@@ -4,13 +4,15 @@ import os
 import requests
 from django.core.files import File
 
-from ..models import ChatFile
+from ..models import ChatFile, Channel
 
 
 def import_rustlog(repo_name: str, channel_name: str, start_date: str, end_date: str):
     # Convert date strings to datetime objects
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
+
+    channel = Channel.objects.get_or_create(name=channel_name)[0]
 
     # List to hold the formatted date strings
     date_list = []
@@ -44,7 +46,7 @@ def import_rustlog(repo_name: str, channel_name: str, start_date: str, end_date:
                 chat_file = ChatFile(
                     file=File(file, name=os.path.basename(file_path)),
                     filename=f"{channel_name}/{date}.log",
-                    channel=channel_name,
+                    channel=channel,
                     is_preprocessed=False,
                     metadata=None,
                 )

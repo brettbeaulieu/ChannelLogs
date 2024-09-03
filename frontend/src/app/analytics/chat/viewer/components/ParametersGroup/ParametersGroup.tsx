@@ -1,32 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { Checkbox, Select, Stack, Text, Paper, Loader, Group } from '@mantine/core';
+import React, { ReactElement, useEffect, useState } from 'react';
+import { Select, Stack, Text, Paper, Loader, Group } from '@mantine/core';
 import styles from './ParametersGroup.module.css';
 import { DateMenu } from '@/components';
 import { getData } from '@/api/apiHelpers';
+import { Channel, CHANNELS_URL, Emote, EmoteSet, EMOTESETS_URL } from '@/api';
 
 type SetStateAction<T> = React.Dispatch<React.SetStateAction<T>>;
 
-export interface EmoteSetData {
-    id: number;
-    name: string;
-    set_id: string;
-    counts: Record<string, any>;
-}
 
-interface EmoteObject {
-    parent_set: string;
-    name: string;
-    emote_id: string;
-}
 
 interface ParametersGroupProps {
-    channel: string | null;
-    setChannel: SetStateAction<string | null>;
+    channel: Channel | undefined;
+    setChannel: SetStateAction<Channel | undefined>;
 
     dateRange: [Date | null, Date | null];
     setDateRange: SetStateAction<[Date | null, Date | null]>;
 
-    emotes: EmoteObject[];
+    emotes: Emote[];
     setEmotes: Function;
 }
 
@@ -39,18 +29,18 @@ export function ParametersGroup({
     setEmotes,
 }: ParametersGroupProps) {
 
-    const [channelList, setChannelList] = useState<string[]>([]);
+    const [channelList, setChannelList] = useState<Channel[]>([]);
     const [comboBoxLoading, setComboBoxLoading] = useState(false);
-    const [emoteSets, setEmoteSets] = useState<EmoteSetData[]>([]);
-    const [emoteSetName, setEmoteSetName] = useState<string | null>(null);
+    const [emoteSets, setEmoteSets] = useState<EmoteSet[]>([]);
+    const [emoteSet, setEmoteSet] = useState<EmoteSet | null>(null);
 
     // Fetch channel list when component mounts
     useEffect(() => {
         async function fetchChannelList() {
             try {
-                const response = await getData('chat/files/get_all_channels');
-                const data = await response.json();
-                setChannelList(data.names);
+                const response = await getData(CHANNELS_URL);
+                const data: Channel[] = await response.json();
+                setChannelList(data);
             } catch (error) {
                 console.error('Failed to fetch channel list', error);
             }
@@ -61,14 +51,14 @@ export function ParametersGroup({
 
     // Handle emote set selection
     useEffect(() => {
-        if (emoteSetName) {
-            const selectedSet = emoteSets.find(set => set.name === emoteSetName);
+        if (emoteSet) {
+            const selectedSet = emoteSets.find(set => set == emoteSet);
             if (selectedSet) {
                 const fetchEmotesForSet = async (setId: string) => {
                     try {
-                        const response = await getData(`chat/emotes`, { parent_set__set_id: setId });
-                        const data: EmoteObject[] = await response.json();
-                        setEmotes(data);
+                        const response = await getData(`${EMOTESETS_URL}${selectedSet.id}`);
+                        const data: EmoteSet = await response.json();
+                        setEmotes(data.emotes);
                     } catch (error) {
                         console.error('Failed to fetch emotes for set', error);
                     }
@@ -76,7 +66,7 @@ export function ParametersGroup({
                 fetchEmotesForSet(selectedSet.set_id);
             }
         }
-    }, [emoteSetName, emoteSets, setEmotes]);
+    }, [emoteSet, emoteSets, setEmotes]);
 
     // Fetch emote sets
     useEffect(() => {
@@ -84,7 +74,7 @@ export function ParametersGroup({
             setComboBoxLoading(true);
             try {
                 const response = await getData('chat/emotesets');
-                const data: EmoteSetData[] = await response.json();
+                const data = await response.json();
                 setEmoteSets(data);
             } catch (error) {
                 console.error('Failed to fetch emote sets', error);
@@ -93,44 +83,57 @@ export function ParametersGroup({
             }
         };
         fetchEmoteSets();
-    }, []); // Empty dependency array means this runs only once
+    }, []);
+
+    const buildOption = (text: string, element: ReactElement): ReactElement => {
+        return (
+            <Paper withBorder className={styles.innerPaper}>
+                <Stack>
+                    <Text ta="center" className={styles.textLabel}>{text}</Text>
+                    {element}
+                </Stack>
+            </Paper>
+        )
+    }
+
+    const handleSetEmoteSet = (newSetName: string | null): void => {
+        if (newSetName) {
+            setEmoteSet(emoteSets.find((x) => x.name==newSetName) || null)
+        }
+    }
+
+    const handleChannelOnChange = (newName: string | null): void => {
+        if (newName) {
+            const obj = channelList.find((x) => x.name == newName);
+            setChannel(obj);
+        }
+    }
 
     return (
         <Paper className={styles.paramsPaper}>
             <Group className={styles.paramsGroup}>
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Emote Set</Text>
-                        <Select
-                            data={emoteSets.map(set => ({ value: set.name, label: set.name }))}
-                            value={emoteSetName || ''}
-                            onChange={(value) => setEmoteSetName(value)}
-                            placeholder="Pick value"
-                            rightSection={comboBoxLoading ? <Loader size={18} /> : null}
-                        />
-                    </Stack>
-                </Paper>
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Channel</Text>
-                        <Select
-                            classNames={{ label: styles.innerTextLabel }}
-                            data={channelList.map(channel => ({ value: channel, label: channel }))}
-                            value={channel || ''}
-                            onChange={setChannel}
-                            searchable
-                        />
-                    </Stack>
-                </Paper>
-                <Paper withBorder className={styles.innerPaper}>
-                    <Stack>
-                        <Text ta="center" className={styles.textLabel}>Date Range</Text>
-                        <DateMenu
-                            dateRange={dateRange}
-                            dateChange={setDateRange}
-                        />
-                    </Stack>
-                </Paper>
+                {buildOption("Emote Set",
+                    <Select
+                        data={emoteSets.map(set => ({ value: set.name, label: set.name }))}
+                        value={emoteSet ? emoteSet.name : ''}
+                        onChange={handleSetEmoteSet}
+                        placeholder="Pick value"
+                        rightSection={comboBoxLoading ? <Loader size={18} /> : null}
+                    />)}
+                {buildOption("Channel",
+                    <Select
+                        classNames={{ label: styles.innerTextLabel }}
+                        data={channelList.map(channel => ({ value: channel.name, label: channel.name }))}
+                        value={channel?.name || ''}
+                        placeholder="Pick channel"
+                        onChange={handleChannelOnChange}
+                        searchable
+                    />)}
+                {buildOption("Date Range",
+                    <DateMenu
+                        dateRange={dateRange}
+                        dateChange={setDateRange}
+                    />)}
             </Group>
         </Paper>
     );

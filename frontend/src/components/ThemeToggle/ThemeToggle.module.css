@@ -1,5 +1,6 @@
 .theme_toggle {
     display: flex;
+    justify-content: right;
     background-color: var(--mantine-color-default-hover);
     color: var(--text-color);
     margin: 0.5rem;

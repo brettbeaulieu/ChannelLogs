@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: backenddb
+      POSTGRES_USER: maire
+      POSTGRES_PASSWORD: maire
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+  celery:
+    build:
+      context: ${BACKEND_DIR}
+      dockerfile: Dockerfile.Celery.development
+    volumes:
+      - ${BACKEND_DIR}:/app
+    depends_on:
+      - redis
+      - backend
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+        limits:
+          cpus: "4.0"
+
+  redis:
+    image: redis:latest
+
+
+  backend:
+    build:
+      context: ${BACKEND_DIR}
+      dockerfile: Dockerfile.development
+    command: >
+      sh -c "python manage.py makemigrations &&
+         python manage.py migrate &&
+         python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ${BACKEND_DIR}:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.settings.development
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+
+  frontend:
+    build:
+      context: ${FRONTEND_DIR}
+      dockerfile: Dockerfile.development
+    ports:
+      - "3000:3000"
+      - "49153:49153"
+    volumes:
+      - ${FRONTEND_DIR}:/app
+
+volumes:
+  postgres_data:
