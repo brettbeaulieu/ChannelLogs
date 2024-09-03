@@ -1,3 +1,7 @@
+"""
+This module contains the view sets and related functionality for the backend API.
+"""
+
 from .chatlog_views import *
 from .message_views import *
 from .emote_views import *

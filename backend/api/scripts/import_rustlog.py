@@ -26,12 +26,11 @@ def import_rustlog(repo_name: str, channel_name: str, start_date: str, end_date:
         # Move to the next day
         current_date += timedelta(days=1)
 
-    # Construct the base link
-    link = f"http://{repo_name}/channel/{channel_name}/"
 
     for date in date_list:
         try:
-            response = requests.get(link + date)
+            link = f"http://{repo_name}/channel/{channel_name}/{date}"
+            response = requests.get(link, timeout=3)
 
             # Define the file path and name
             file_path = f"/tmp/{channel_name}/{date}.log"
@@ -56,6 +55,6 @@ def import_rustlog(repo_name: str, channel_name: str, start_date: str, end_date:
             os.remove(file_path)
 
         except requests.RequestException as e:
-            print(f"Error fetching URL {link + date}: {e}")
+            print(f"Error fetching URL {link}: {e}")
         except IOError as e:
             print(f"Error handling file {file_path}: {e}")

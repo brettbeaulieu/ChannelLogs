@@ -1,3 +1,7 @@
+'''
+Module to define the Celery tasks dispatched by the django backend.
+'''
+
 from celery import shared_task
 
 from .models import ChatFile, Task
@@ -9,13 +13,16 @@ def preprocess_task(
     ticket_id,
     row_id,
     file_path,
-    format,
+    format_str,
     use_sentiment,
     use_emotes,
     emote_set,
     filter_emotes,
     min_words,
 ):
+    '''
+    Celery task to preprocess a log file.
+    '''
 
     # Get task object, and set in progress
     task = Task.objects.get(ticket=ticket_id)
@@ -27,7 +34,7 @@ def preprocess_task(
         preprocess_log(
             row_id,
             file_path,
-            format,
+            format_str,
             use_sentiment,
             use_emotes,
             emote_set,
@@ -50,6 +57,9 @@ def preprocess_task(
 
 @shared_task
 def build_emote_set_task(set_id, ticket_id):
+    '''
+    Celery task to build an emote set.
+    '''
 
     # Get task object, and set in progress
     task = Task.objects.get(ticket=ticket_id)

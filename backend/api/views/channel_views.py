@@ -1,16 +1,16 @@
-import json
+'''
+Module for Channel-related views.
+'''
 
-import requests
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.request import HttpRequest
-from rest_framework.response import Response
-from django.utils.dateparse import parse_datetime
-
-from ..models import Channel, Task
+from rest_framework import viewsets
+from ..models import Channel
 from ..serializers import ChannelSerializer
 
 
 class ChannelViewSet(viewsets.ModelViewSet):
+    '''
+    Standard viewset for Channel objects.
+    No custom actions are defined
+    '''
     queryset = Channel.objects.all()
     serializer_class = ChannelSerializer

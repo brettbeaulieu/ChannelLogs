@@ -1,3 +1,8 @@
+'''
+Module to store functions for preprocessing data from Chatterino, or Rustlog files.
+Also contains functionality for posting data to the databse on completion.
+'''
+
 import re
 from collections import Counter
 from transformers import pipeline
@@ -8,7 +13,20 @@ from ..models import ChatFile, EmoteSet, Message, MessageEmote
 CREATE_PREFIX = "bulk_create/"
 
 
-def extract_info_chatterino(path: str, emote_names: list[str] = []) -> list:
+def extract_info_chatterino(path: str, emote_names: list[str] = None) -> list:
+    """
+    Extract chat message information from a Chatterino log file.
+
+    Args:
+        path (str): The file path of the Chatterino log file.
+        emote_names (list[str], optional): A list of emote names to include
+        in the extracted information. If not provided, emote information will not be included.
+
+    Returns:
+        list: A list of dictionaries, where each dictionary represents a chat message and contains
+            keys for the message timestamp, username, message text, and emote information
+            (if emote_names were provided).
+    """
     form_data_list = []
     with open(path, mode="r", encoding="UTF-8") as log_file:
         lines = log_file.readlines()
@@ -20,7 +38,21 @@ def extract_info_chatterino(path: str, emote_names: list[str] = []) -> list:
     return form_data_list
 
 
-def extract_info_rustlog(path: str, emote_names: list[str] = []) -> list:
+def extract_info_rustlog(path: str, emote_names: list[str] = None) -> list:
+    """
+    Extract chat message information from a Rustlog log file.
+
+    Args:
+        path (str): The file path of the Rustlog log file.
+        emote_names (list[str], optional): A list of emote names to include 
+        in the extracted information. If not provided, emote information 
+        will not be included.
+
+    Returns:
+        list: A list of dictionaries, where each dictionary represents a chat message and contains
+        keys for the message timestamp, username, message text, and emote information 
+        (if emote_names were provided).
+    """
     form_data_list = []
     with open(path, mode="r", encoding="UTF-8") as log_file:
         for line in log_file:
@@ -31,8 +63,23 @@ def extract_info_rustlog(path: str, emote_names: list[str] = []) -> list:
 
 
 def read_line_chatterino(
-    day: str, line: str, emote_names: list[str] = []
+    day: str, line: str, emote_names: list[str] = None
 ) -> dict[str, any]:
+    """
+    Extract chat message information from a single line of a Chatterino log file.
+
+    Args:
+        day (str): The date portion of the timestamp, in the format "YYYY-MM-DD".
+        line (str): The line from the Chatterino log file to extract information from.
+        emote_names (list[str], optional): A list of emote names to include in the 
+        extracted information. If not provided, emote information will not be included.
+
+    Returns:
+        dict[str, any]: A dictionary containing the extracted information, with keys for timestamp,
+            username, message text, and emote information (if emote_names were provided).
+            If the line does not match the expected format, an empty dictionary is returned.
+    """
+
     # Define the regex pattern for extracting the timestamp, username, and message
     pattern = re.compile(
         r"^\[(?P<time>\d{2}:\d{2}:\d{2})\] (?P<user>[^:]+): (?P<message>.*)$"
@@ -53,13 +100,25 @@ def read_line_chatterino(
             "message": message,
             "emotes": emote_count,
         }
-    else:
-        # If the line does not match the expected format, return an empty dictionary
-        return {}
+    # If the line does not match the expected format, return an empty dictionary
+    return {}
 
 
-def read_line_rustlog(line: str, emote_names: list[str] = []) -> dict[str, any]:
+def read_line_rustlog(line: str, emote_names: list[str] = None) -> dict[str, any]:
     # Define the regex pattern for extracting the timestamp, username, and message
+    """
+    Extract chat message information from a single line of a Rustlog log file.
+
+    Args:
+        line (str): The line from the Rustlog log file to extract information from.
+        emote_names (list[str], optional): A list of emote names to include in the 
+        extracted information. If not provided, emote information will not be included.
+
+    Returns:
+        dict[str, any]: A dictionary containing the extracted information, with keys for timestamp,
+            username, message text, and emote information (if emote_names were provided).
+            If the line does not match the expected format, an empty dictionary is returned.
+    """
     pattern = re.compile(
         r"^\[(?P<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] #[^ ]+ (?P<username>[^:]+): (?P<message>.*)$"
     )
@@ -80,12 +139,23 @@ def read_line_rustlog(line: str, emote_names: list[str] = []) -> dict[str, any]:
             "message": message,
             "emotes": emote_count,
         }
-    else:
-        # If the line does not match the expected format, return an empty dictionary
-        return {}
+    # If the line does not match the expected format, return an empty dictionary
+    return {}
 
 
 def count_emotes_in_msg(message: str, emote_names: list[str]) -> dict[str, int]:
+    """
+    Count the occurrences of specified emotes in a given message.
+
+    Args:
+        message (str): The message text to search for emotes.
+        emote_names (list[str]): A list of emote names to count occurrences for.
+
+    Returns:
+        dict[str, int]: A dictionary mapping each emote name to the number of times
+        it occurs in the message. Emotes that do not appear in the message are not
+        included in the dictionary.
+    """
     # Split the message into words
     words = message.split()
 
@@ -100,9 +170,22 @@ def count_emotes_in_msg(message: str, emote_names: list[str]) -> dict[str, int]:
     return emote_counts
 
 
-def get_emote_set(emoteSetName):
-    emote_set = EmoteSet.objects.get(name=emoteSetName)
+def get_emote_set(emote_set_name):
+    """
+    Retrieve an EmoteSet object from the database based on its name.
+
+    Args:
+        emote_set_name (str): The name of the EmoteSet to retrieve.
+
+    Returns:
+        QuerySet: A QuerySet containing the Emote objects associated with the retrieved EmoteSet.
+
+    Raises:
+        EmoteSet.DoesNotExist: If an EmoteSet with the given name does not exist in the database.
+    """
+    emote_set = EmoteSet.objects.get(name=emote_set_name)
     return emote_set.emotes.all()
+
 
 def filter_emotes_from_message(message):
     """Remove any emotes from the message"""
@@ -114,49 +197,50 @@ def filter_emotes_from_message(message):
     return cleaned_message
 
 
-def is_valid_message(message: str, minWords: int, useEmotes: bool) -> bool:
+def is_valid_message(message: str, min_words: int, use_emotes: bool) -> bool:
     """
     Check if the message has a minimum number of words.
     Optionally, do not consider emotes as words.
     """
     num_words = len(re.findall(r"\w+", message["message"]))
 
-    if useEmotes and message["emotes"]:
+    if use_emotes and message["emotes"]:
         num_words -= sum(message["emotes"].values())
-    return num_words >= minWords
+    return num_words >= min_words
 
 
 def preprocess_log(
     parent_id: int,
     log_path: str,
-    format: str,
-    useSentiment: bool,
-    useEmotes: bool,
-    emoteSetName: str,
-    filterEmotes: bool,
-    minWords: int,
+    format_str: str,
+    use_sentiment: bool,
+    use_emotes: bool,
+    emote_set_name: str,
+    filter_emotes: bool,
+    min_words: int,
 ):
 
     # Get emote set, if emotes anbled
-    if useEmotes:
-        emoteSetObj = get_emote_set(emoteSetName)
-        emote_names = [x.name for x in emoteSetObj]
+    if use_emotes:
+        emote_set_obj = get_emote_set(emote_set_name)
+        emote_names = [x.name for x in emote_set_obj]
     else:
         emote_names = []
 
     # Get log lines
     extract_info = extract_info_rustlog
-    if format == "Chatterino":
+    if format_str == "Chatterino":
         extract_info = extract_info_chatterino
 
     # Extract info from lines
     form_data_list = extract_info(log_path, emote_names)
 
     # Validate messages by length for sentiment analysis
-    msg_validator = lambda x: is_valid_message(x, minWords, useEmotes)
+    def msg_validator(x):
+        is_valid_message(x, min_words, use_emotes)
 
     # Do sentiment analysis, if desired
-    if useSentiment:
+    if use_sentiment:
         # Initialize pipeline for zero-shot
         pipe = pipeline(
             "zero-shot-classification",
@@ -165,7 +249,7 @@ def preprocess_log(
             batch_size=16,
         )
 
-        if filterEmotes:
+        if filter_emotes:
             messages = [
                 filter_emotes_from_message(msg)
                 for msg in form_data_list
@@ -193,9 +277,6 @@ def preprocess_log(
             else:
                 item.update({"sentiment_score": sentiment_score.pop(0)})
 
-
-
-
     # Prepare messages in bulk
     parent_log = ChatFile.objects.get(id=parent_id)
     messages_to_create = []
@@ -205,25 +286,36 @@ def preprocess_log(
         # Extract user and remove it from the data dictionary
 
         # Create a Message instance with the remaining data
-        if useSentiment:
-            message = Message(parent_log=parent_log, username=user_data["username"], timestamp=user_data["timestamp"], message=user_data["message"], sentiment_score=user_data["sentiment_score"])
+        if use_sentiment:
+            message = Message(
+                parent_log=parent_log,
+                username=user_data["username"],
+                timestamp=user_data["timestamp"],
+                message=user_data["message"],
+                sentiment_score=user_data["sentiment_score"],
+            )
         else:
-            message = Message(parent_log=parent_log, username=user_data["username"], timestamp=user_data["timestamp"], message=user_data["message"])
+            message = Message(
+                parent_log=parent_log,
+                username=user_data["username"],
+                timestamp=user_data["timestamp"],
+                message=user_data["message"],
+            )
 
         messages_to_create.append(message)
 
         message.save()
-        if useEmotes:
+        if use_emotes:
             emotes = user_data.get("emotes", {})
             for emote_name, count in emotes.items():
-                emote_obj =  emoteSetObj.get(name=emote_name)
-                message_emotes_to_create.append(MessageEmote(
-                    message=message,
-                    emote=emote_obj,
-                    count=count
-                ))
+                emote_obj = emote_set_obj.get(name=emote_name)
+                message_emotes_to_create.append(
+                    MessageEmote(message=message, emote=emote_obj, count=count)
+                )
 
     # Insert messages in bulk
     Message.objects.bulk_create(messages_to_create, ignore_conflicts=True)
-    if useEmotes:
-        MessageEmote.objects.bulk_create(message_emotes_to_create, ignore_conflicts=True)
+    if use_emotes:
+        MessageEmote.objects.bulk_create(
+            message_emotes_to_create, ignore_conflicts=True
+        )

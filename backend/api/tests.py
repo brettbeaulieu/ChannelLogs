@@ -1,8 +1,8 @@
-from django.test import TestCase, Client
-from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase
+
 from .models import ChatFile
-import os
+
 
 class FileUploadTestCase(TestCase):
     def setUp(self):
@@ -25,7 +25,7 @@ class FileUploadTestCase(TestCase):
 
     def test_list_files(self):
         file_content = b"Small test file. (List)"
-        file = SimpleUploadedFile(f'test_file_3.txt', file_content, content_type='text/plain')
+        file = SimpleUploadedFile('test_file_3.txt', file_content, content_type='text/plain')
         chat_log = ChatFile.objects.create(file=file)
 
         # Perform GET request to list files

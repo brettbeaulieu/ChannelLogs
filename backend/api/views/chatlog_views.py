@@ -1,19 +1,29 @@
+"""
+Module for all ChatLog views
+"""
+
 import json
 
 import requests
-from django.forms.models import model_to_dict
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import HttpRequest
 from rest_framework.response import Response
-from django.utils.dateparse import parse_datetime
 
-from ..models import Channel, ChatFile, Task, get_default_channel
+from ..common import parse_dates
+
+
+from ..models import Channel, ChatFile, Task
 from ..serializers import ChatFileSerializer
 from ..tasks import get_rustlog_task, preprocess_task
 
 
 class ChatFileViewSet(viewsets.ModelViewSet):
+    """
+    View set for ChatFiles, with custom views for tasks such as preprocessing
+    ChatFiels, and retrieving data from a Rustlog API endpoint.
+    """
+
     queryset = ChatFile.objects.all()
     serializer_class = ChatFileSerializer
 
@@ -36,11 +46,7 @@ class ChatFileViewSet(viewsets.ModelViewSet):
             }
 
             # Create a ChatLog instance
-            print("Making serializer")
-            try:
-                serializer = self.get_serializer(data=chat_log_data)
-            except Exception as e:
-                print(f"Error: {e}")
+            serializer = self.get_serializer(data=chat_log_data)
             serializer.is_valid(raise_exception=True)
 
             self.perform_create(serializer)
@@ -53,43 +59,67 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         ref_instance = self.get_object()
-        
+
         channel = dict(request.POST)
         formatted = {"channel": json.loads(channel["channel"][0])}
 
-        ref_instance.channel = Channel.objects.get(id=formatted["channel"]['id'])
+        ref_instance.channel = Channel.objects.get(id=formatted["channel"]["id"])
         ref_instance.save()
 
-        ref_serializer = self.get_serializer() 
+        ref_serializer = self.get_serializer()
 
         headers = self.get_success_headers(ref_serializer.data)
         return Response(ref_serializer.data, status=status.HTTP_200_OK, headers=headers)
 
     @action(detail=False, methods=["delete"])
-    def delete_all(self, request: HttpRequest, *args, **kwargs):
+    def delete_all(self, request: HttpRequest):
+        """
+        Deletes all rows from the ChatFile table.
+
+        Arguments:
+            request -- HttpRequest object
+        Returns:
+            Response object with status code 200 OK
+        """
         ChatFile.objects.all().delete()
         return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
     def preprocess(self, request: HttpRequest, *args, **kwargs):
-        #  Request: <QueryDict: {'parentIds', 'format', 'useEmotes', 'emoteSet', 'filterEmotes', 'minWords'}>
-        # Obtain id for the row to preprocess
+        """
+        Create a preprocessing task for the given file, and return
+        the associated ticket number.
 
-        ROW_IDS: list[str] = json.loads(request.POST.get("parentIds"))
-        FORMAT: str = request.POST.get("format")
-        USE_SENTIMENT = json.loads(request.POST.get("useSentiment").lower())
-        USE_EMOTES = json.loads(request.POST.get("useEmotes").lower())
-        EMOTE_SET = request.POST.get("emoteSet")
-        FILTER_EMOTES = json.loads(request.POST.get("filterEmotes").lower())
-        MIN_WORDS = int(request.POST.get("minWords"))
+        Arguments:
+            request -- HttpRequest object containing the following fields:
+                - parentIds: list[str]
+                - format: str
+                - useSentiment: bool
+                - useEmotes: bool
+                - emoteSet: str
+                - filterEmotes: bool
+                - minWords: int
 
-        if not ROW_IDS:
+        Returns:
+            Response object with status code 200 OK, containing 'message' and
+            'ticket' fields
+        """
+
+        row_ids: list[str] = json.loads(request.POST.get("parentIds"))
+        format_str = request.POST.get("format")
+        use_sentiment = json.loads(request.POST.get("useSentiment").lower())
+        use_emotes = json.loads(request.POST.get("useEmotes").lower())
+        emote_set = request.POST.get("emoteSet")
+        filter_emotes = json.loads(request.POST.get("filterEmotes").lower())
+        min_words = int(request.POST.get("minWords"))
+
+        if not row_ids:
             return Response(
                 {"error": "No id(s) provided to preprocess"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        for row in ROW_IDS:
+        for row in row_ids:
             # Check if id exists in the table
             try:
                 obj = ChatFile.objects.get(id=row)
@@ -107,12 +137,12 @@ class ChatFileViewSet(viewsets.ModelViewSet):
                 task.ticket,
                 row,
                 obj.file.path,
-                FORMAT,
-                USE_SENTIMENT,
-                USE_EMOTES,
-                EMOTE_SET,
-                FILTER_EMOTES,
-                MIN_WORDS,
+                format_str,
+                use_sentiment,
+                use_emotes,
+                emote_set,
+                filter_emotes,
+                min_words,
             )
 
             return Response(
@@ -125,27 +155,27 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def grab_logs_rustlog(self, request: HttpRequest, *args, **kwargs):
+        """
+        Create a task to retrieve logs from a Rustlog repository, and return
+        the associated ticket number.
+
+        Arguments:
+            request -- HttpRequest object containing the following fields:
+                - repo_name: str
+                - channel_name: str
+                - start_date: str
+                - end_date: str
+
+        Returns:
+            Response object with status code 200 OK, containing 'message' and
+            'ticket' fields
+        """
         repo_name = request.POST.get("repo_name")
         channel_name = request.POST.get("channel_name")
         start_date_str = request.POST.get("start_date")
         end_date_str = request.POST.get("end_date")
 
-        # Handle default date values
-        if not start_date_str:
-            start_date_str = "0001-01-01T00:00:00"
-        if not end_date_str:
-            end_date_str = "3001-01-01T00:00:00"
-
-        try:
-            start_date = parse_datetime(start_date_str)
-            end_date = parse_datetime(end_date_str)
-            if not start_date or not end_date:
-                raise ValueError("Invalid date format")
-        except ValueError:
-            return Response(
-                {"error": "Invalid date format. Use YYYY-MM-DD."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        start_date_str, end_date_str = parse_dates(start_date_str, end_date_str)
 
         # Create task object
         task = Task.objects.create(status="PENDING")
@@ -164,6 +194,16 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def get_channels_rustlog(self, request, *args, **kwargs):
+        """
+        Return all channels found in a Rustlog repository.
+
+        Arguments:
+            request -- HttpRequest object containing the following fields:
+                - repo_url: str
+
+        Returns:
+            Response object with status code 200 OK, containing 'data' field
+        """
         # Retrieve the repository URL from query parameters
         repo_url = request.query_params.get("repo_url")
 
@@ -176,8 +216,8 @@ class ChatFileViewSet(viewsets.ModelViewSet):
 
         # Perform the GET request to the channels endpoint
         try:
-            response = requests.get(f"{repo_url}/channels")
-        except requests.RequestException as e:
+            response = requests.get(f"{repo_url}/channels", timeout=3)
+        except requests.RequestException:
             # Handle exceptions from the requests library (e.g., connection errors)
             return Response(
                 {"error": "could not connect to repo_url"},

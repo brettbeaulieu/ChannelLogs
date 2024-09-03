@@ -3,7 +3,7 @@ from ..models import Emote, EmoteSet
 
 
 def build_emote_set(set_id: str) -> None:
-    response = requests.get(f"http://7tv.io/v3/emote-sets/{set_id}")
+    response = requests.get(f"http://7tv.io/v3/emote-sets/{set_id}", timeout=3)
     if response.status_code != 200:
         raise ConnectionError("Couldn't recover emote set, it may not exist.")
 
