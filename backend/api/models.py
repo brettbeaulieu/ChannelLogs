@@ -158,7 +158,7 @@ class Task(models.Model):
         result: The result of the task
     '''
     task_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    task_type = models.CharField(max_length=255)
+    task_type = models.CharField(max_length=255, default="No type")
     status = models.CharField(max_length=20)
     result = models.TextField(null=True, blank=True)
     TICKET_STATUSES = [

@@ -7,19 +7,16 @@ from django.core.files import File
 from ..models import ChatFile, Channel
 
 
-def import_rustlog(repo_name: str, channel_name: str, start_date: str, end_date: str):
-    # Convert date strings to datetime objects
-    start = datetime.strptime(start_date, "%Y-%m-%d")
-    end = datetime.strptime(end_date, "%Y-%m-%d")
-
+def import_rustlog(repo_name: str, channel_name: str, start_date: datetime, end_date: datetime):
+    # Get channel
     channel = Channel.objects.get_or_create(name=channel_name)[0]
 
     # List to hold the formatted date strings
     date_list = []
 
     # Iterate over the date range
-    current_date = start
-    while current_date <= end:
+    current_date = start_date
+    while current_date <= end_date:
         # Format date as 'YYYY/M/D'
         formatted_date = current_date.strftime("%Y/%-m/%-d")
         date_list.append(formatted_date)

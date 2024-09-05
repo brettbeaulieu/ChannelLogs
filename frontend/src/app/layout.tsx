@@ -24,7 +24,11 @@ export default function RootLayout({
         <ColorSchemeScript />
       </head>
       <body>
-        <MantineProvider>
+        <MantineProvider
+              theme={{
+                fontFamily: 'Open Sans, sans-serif',
+                headings: { fontFamily: 'Open Sans, sans-serif' },
+              }}>
           <Notifications />
           {children}
         </MantineProvider>

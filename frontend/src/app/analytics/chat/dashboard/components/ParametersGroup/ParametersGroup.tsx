@@ -1,18 +1,15 @@
-import React, { ReactElement, useEffect, useState } from 'react'
+import React, { ReactElement } from 'react'
 import {
   Checkbox,
   Group,
   NumberInput,
   Paper,
   SegmentedControl,
-  Select,
   Stack,
   Text,
 } from '@mantine/core'
 import styles from './ParametersGroup.module.css'
-import { DateMenu } from '@/components'
-import { getData } from '@/api/apiHelpers'
-import { Channel, CHANNELS_URL } from '@/api'
+import { Channel } from '@/api'
 
 type SetStateAction<T> = React.Dispatch<React.SetStateAction<T>>
 
@@ -37,8 +34,6 @@ interface ParametersGroupProps {
 }
 
 export function ParametersGroup({
-  channel,
-  setChannel,
   granularity,
   setGranularity,
   chartStyle,
@@ -47,25 +42,8 @@ export function ParametersGroup({
   setUseMA,
   maPeriod,
   setMAPeriod,
-  dateRange,
-  setDateRange,
 }: ParametersGroupProps) {
-  const [channelList, setChannelList] = useState<Channel[]>([])
 
-  // Fetch channel list when component mounts
-  useEffect(() => {
-    async function fetchChannelList() {
-      try {
-        const response = await getData(CHANNELS_URL)
-        const data: Channel[] = await response.json()
-        setChannelList(data)
-      } catch (error) {
-        console.error('Failed to fetch channel list', error)
-      }
-    }
-
-    fetchChannelList()
-  }, []) // Empty dependency array means this runs only once
 
   const buildOption = (text: string, element: ReactElement): ReactElement => {
     return (
@@ -80,30 +58,10 @@ export function ParametersGroup({
     )
   }
 
-  const handleChannelOnChange = (newName: string | null): void => {
-    if (newName) {
-      const obj = channelList.find((x) => x.name == newName)
-      setChannel(obj)
-    }
-  }
 
   return (
     <Paper className={styles.paramsPaper}>
       <Group className={styles.paramsGroup}>
-        {buildOption(
-          'Channel',
-          <Select
-            classNames={{ label: styles.innerTextLabel }}
-            data={channelList.map((elem: Channel) => elem.name)}
-            value={channel ? channel.name : ''}
-            onChange={handleChannelOnChange}
-            searchable
-          />,
-        )}
-        {buildOption(
-          'Date Range',
-          <DateMenu dateRange={dateRange} dateChange={setDateRange} />,
-        )}
         {buildOption(
           'Granularity',
           <SegmentedControl

@@ -1,0 +1,7 @@
+.paper {
+    padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+}
+
+.select {
+    text-align: center;
+}

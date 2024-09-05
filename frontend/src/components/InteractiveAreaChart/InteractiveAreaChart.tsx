@@ -113,6 +113,8 @@ export function InteractiveAreaChart({
   const [graphData, setGraphData] = useState<GraphItem[]>([])
   const [isLoadingGraph, setIsLoadingGraph] = useState<boolean>(false)
 
+  console.log()
+
   const fetchGraphData = useCallback(
     async (
       channel: Channel,

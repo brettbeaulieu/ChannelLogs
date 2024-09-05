@@ -1,8 +1,10 @@
 .root {
+  width: 100%;
+  flex: 1;
 }
 
 .paper {
-  border-radius: 0;
+  flex: 1;
 }
 
 .stack {

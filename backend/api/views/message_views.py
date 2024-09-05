@@ -3,7 +3,7 @@ Module for Message views.
 '''
 
 import numpy as np
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg
 from django_filters import rest_framework as filters
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -495,3 +495,27 @@ class MessageViewSet(viewsets.ModelViewSet):
         # Query to sum values for each distinct key in 'emotes', and normalize to average at 0.
         response_data = get_emote_sums(channel, start_date, end_date)
         return Response(response_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def sentiment_aggregate(self, request):
+        """
+        Retrieve the aggregated sentiment scores per 'period' 
+        for a given channel within a specified date range.
+
+        Query Parameters:
+            - channel (str): The name of the channel for which to aggregate sentiment scores.
+            - start_date (str): The start date of the date range in YYYY-MM-DD format.
+            - end_date (str): The end date of the date range in YYYY-MM-DD format.
+            - granularity (str, optional): The granularity of the aggregation
+              (e.g., 'day', 'week', 'month').
+                Defaults to 'day'.
+
+        Returns:
+            Response: A Django REST Framework Response object containing a list of dictionaries,
+                where each dictionary contains the following keys:
+                - 'date' (str): The date or period for which the sentiment scores are aggregated.
+                - 'value' (float): The average sentiment score within the specified date range.
+            The aggregated data is normalized such that the maximum value is 1 and the
+            minimum value is -1.
+        """
+        return aggregate_data(request, Avg("sentiment_score"), "value")

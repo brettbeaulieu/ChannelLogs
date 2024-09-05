@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
-import { InteractiveAreaChart, StatsGrid } from '@/components'
+import React, { useEffect, useState } from 'react'
+import { InteractiveAreaChart, StatsGrid, ChannelDateGroup } from '@/components'
 import { Group, Paper, Stack } from '@mantine/core'
 import { EmoteList, ParametersGroup } from './components'
 import styles from './MainPanel.module.css'
-import { Channel } from '@/api'
+import { Channel, CHANNELS_URL, getData } from '@/api'
+
 
 export default function MainPanel() {
   const today = new Date()
@@ -13,6 +14,7 @@ export default function MainPanel() {
   yesterday.setDate(today.getDate() - 1)
 
   const [channel, setChannel] = useState<Channel | undefined>(undefined)
+  const [channelList, setChannelList] = useState<Channel[]>([])
   const [chartStyle, setChartStyle] = useState<string>('Area')
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     yesterday,
@@ -22,10 +24,36 @@ export default function MainPanel() {
   const [useMA, setUseMA] = useState<boolean>(false)
   const [maPeriod, setMAPeriod] = useState<string | number>(1)
 
+
+
+  // Fetch channel list when component mounts
+  useEffect(() => {
+    async function fetchChannelList() {
+      try {
+        const response = await getData(CHANNELS_URL)
+        const data: Channel[] = await response.json()
+        setChannelList(data)
+      } catch (error) {
+        console.error('Failed to fetch channel list', error)
+      }
+    }
+    fetchChannelList()
+  }, [])
+
   return (
     <main className={styles.main}>
       <Paper className={styles.mainPaper}>
         <Stack className={styles.mainStack}>
+          <Group>
+            <StatsGrid channel={channel} dateRange={dateRange} />
+            <ChannelDateGroup
+              channel={channel}
+              setChannel={setChannel}
+              channelList={channelList}
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+            />
+          </Group>
           <ParametersGroup
             channel={channel}
             setChannel={setChannel}
@@ -43,7 +71,6 @@ export default function MainPanel() {
 
           <Group className={styles.mainGroup}>
             <Stack className={styles.mainstack1} justify="space-between">
-              <StatsGrid channel={channel} dateRange={dateRange} />
               <InteractiveAreaChart
                 dateRange={dateRange}
                 fetchURL={'chat/messages/message_count_aggregate'}

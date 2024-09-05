@@ -2,8 +2,8 @@
 Module to define the Celery tasks dispatched by the django backend.
 '''
 
+from datetime import datetime
 from celery import shared_task
-
 from .models import ChatFile, Task
 from .scripts import preprocess_log, import_rustlog, build_emote_set
 
@@ -79,7 +79,7 @@ def build_emote_set_task(set_id, ticket_id):
 
 @shared_task
 def get_rustlog_task(
-    ticket_id, repo_name: str, channel_name: str, start_date: str, end_date: str
+    ticket_id, repo_name: str, channel_name: str, start_date: datetime, end_date: str
 ):
     # Get task object, and set in progress
     task = Task.objects.get(ticket=ticket_id)

@@ -3,18 +3,16 @@ import {
   Group,
   NumberFormatter,
   Paper,
-  SimpleGrid,
   Skeleton,
   Stack,
   Text,
 } from '@mantine/core'
-import { IconMessage, IconUser } from '@tabler/icons-react' // Adjust imports if necessary
+import { IconMessage, IconUser } from '@tabler/icons-react'
 import styles from './StatsGrid.module.css'
 import { getData, toIsoDateString } from '@/api/apiHelpers'
 import { Channel, MESSAGES_URL } from '@/api'
 
 export interface DataStruct {
-  idx: number
   title: string
   value: number
 }
@@ -24,7 +22,6 @@ export interface StatsGridProps {
   dateRange: [Date | null, Date | null]
 }
 
-// Define a mapping of titles to icons
 const iconMapping: Record<string, ReactElement> = {
   'Unique Users': (
     <IconUser className={styles.icon} size="1.4rem" stroke={1.5} />
@@ -36,20 +33,16 @@ const iconMapping: Record<string, ReactElement> = {
 
 export function StatsGrid({ channel, dateRange }: StatsGridProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [msgData, setMsgData] = useState<DataStruct>({
-    idx: 0,
-    title: 'Message Count',
-    value: 0,
-  })
-  const [userData, setUserData] = useState<DataStruct>({
-    idx: 1,
-    title: 'Unique Users',
-    value: 0,
-  })
+  const [msgData, setMsgData] = useState<DataStruct>({"title": "Message Count", "value": 0})
+  const [userData, setUserData] = useState<DataStruct>({"title": "Unique Users", "value": 0})
 
-  const buildGrid = useCallback((data: DataStruct) => {
-    // Select an icon based on data title
-    const icon = iconMapping[data.title] || (
+  const buildGridItem = useCallback((data: DataStruct | null) => {
+    const displayData = data || {
+      title: 'Loading...',
+      value: 0,
+    }
+
+    const icon = iconMapping[displayData.title] || (
       <IconMessage size="1.4rem" stroke={1.5} />
     )
 
@@ -58,12 +51,12 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
         <Stack className={styles.stack}>
           <Group justify="space-between">
             <Text size="sm" className={styles.title}>
-              {data.title}
+              {displayData.title}
             </Text>
             {icon}
           </Group>
           <Text className={styles.value}>
-            {<NumberFormatter thousandSeparator value={data.value} />}
+            {<NumberFormatter thousandSeparator value={displayData.value} />}
           </Text>
         </Stack>
       </Paper>
@@ -79,17 +72,14 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
           end_date: endDate,
         })
         const data = await response.json()
-        // Assuming the data is { value: x }
         return {
-          idx: 1,
-          title: 'Unique Users', // Add appropriate title here
+          title: 'Unique Users',
           value: data.value || 0,
         }
       } catch (error) {
-        console.error('Error fetching stat data:', error)
+        console.error('Error fetching user data:', error)
         return {
-          idx: 1,
-          title: 'Unique Users', // Default title for error case
+          title: 'Unique Users',
           value: 0,
         }
       }
@@ -106,17 +96,14 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
           end_date: endDate,
         })
         const data = await response.json()
-        // Assuming the data is { value: x }
         return {
-          idx: 0,
-          title: 'Message Count', // Add appropriate title here
+          title: 'Message Count',
           value: data.value || 0,
         }
       } catch (error) {
-        console.error('Error fetching stat data:', error)
+        console.error('Error fetching message data:', error)
         return {
-          idx: 0,
-          title: 'Message Count', // Default title for error case
+          title: 'Message Count',
           value: 0,
         }
       }
@@ -131,6 +118,7 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
         setIsLoading(false)
         return
       }
+
       const startDate = toIsoDateString(dateRange[0])
       const endDate = toIsoDateString(dateRange[1])
 
@@ -145,16 +133,18 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
         setIsLoading(false)
       }
     }
+
     updateStats()
   }, [channel, dateRange, fetchMessageData, fetchUserData])
 
   return (
     <div className={styles.root}>
-      <SimpleGrid key={1} cols={2} spacing="md">
-        <Skeleton hidden={isLoading}>
-          {[msgData, userData].map(buildGrid)}
-        </Skeleton>
-      </SimpleGrid>
+      <Skeleton visible={isLoading}>
+        <Group>
+          {buildGridItem(msgData)}
+          {buildGridItem(userData)}
+        </Group>
+      </Skeleton>
     </div>
   )
 }

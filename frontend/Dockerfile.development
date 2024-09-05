@@ -6,7 +6,6 @@ WORKDIR /app
 
 # Set environment variable
 ENV NODE_ENV=development
-ENV CHOKIDAR_USEPOLLING=true
 ENV WATCHPACK_POLLING=true
 
 # Copy package files

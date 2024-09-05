@@ -1,5 +1,5 @@
 """
-Module for all ChatLog views
+Module for all ChatFile views
 """
 
 import json
@@ -21,7 +21,7 @@ from ..tasks import get_rustlog_task, preprocess_task
 class ChatFileViewSet(viewsets.ModelViewSet):
     """
     View set for ChatFiles, with custom views for tasks such as preprocessing
-    ChatFiels, and retrieving data from a Rustlog API endpoint.
+    ChatFiles, and retrieving data from a Rustlog API endpoint.
     """
 
     queryset = ChatFile.objects.all()
@@ -175,14 +175,14 @@ class ChatFileViewSet(viewsets.ModelViewSet):
         start_date_str = request.POST.get("start_date")
         end_date_str = request.POST.get("end_date")
 
-        start_date_str, end_date_str = parse_dates(start_date_str, end_date_str)
+        start_date, end_date = parse_dates(start_date_str, end_date_str)
 
         # Create task object
         task = Task.objects.create(status="PENDING")
 
         # Dispatch task to Celery
         get_rustlog_task.delay(
-            task.ticket, repo_name, channel_name, start_date_str, end_date_str
+            task.ticket, repo_name, channel_name, start_date, end_date
         )
         return Response(
             {
@@ -193,7 +193,7 @@ class ChatFileViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=False, methods=["get"])
-    def get_channels_rustlog(self, request, *args, **kwargs):
+    def get_channels_rustlog(self, request):
         """
         Return all channels found in a Rustlog repository.
 
