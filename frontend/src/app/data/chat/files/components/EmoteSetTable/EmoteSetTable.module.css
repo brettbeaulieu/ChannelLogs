@@ -1,3 +1,9 @@
+.mainPaper {
+  margin: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-md);
+}
+
+
 .table {
   width: 100%;
   background-color: var(--mantine-color-default);

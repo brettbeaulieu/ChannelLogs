@@ -3,6 +3,7 @@
 }
 
 .mainPaper {
+  z-index: 2;
 }
 
 .textLabel {

@@ -5,6 +5,8 @@
 }
 
 .inner_paper_stack {
+  width: 100%;
+  flex: 1;
   height: 100%;
 }
 
@@ -22,12 +24,11 @@
 
 .inner_paper {
   display: flex;
+  flex: 1;
   justify-content: center;
   margin: var(--mantine-spacing-md);
   padding: var(--mantine-spacing-md);
-  width: 50%;
   height: 100%;
-  border-radius: 0;
 }
 
 @media (min-width: 769px) {

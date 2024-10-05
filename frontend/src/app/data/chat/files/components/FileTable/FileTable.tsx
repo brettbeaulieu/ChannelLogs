@@ -6,7 +6,6 @@ import {
   Group,
   Tooltip,
   Box,
-  Drawer,
   Text,
   Checkbox,
   Paper,
@@ -21,7 +20,7 @@ import {
   IconSortDescending,
 } from '@tabler/icons-react'
 import { useState, useEffect } from 'react'
-import { deleteData, parseFormatDateTime, patchData } from '@/api/apiHelpers'
+import { parseFormatDateTime, patchData } from '@/api/apiHelpers'
 import styles from './FileTable.module.css'
 import { PreprocessModal, VisibilityMenu } from './components'
 import { Channel, ChatFile, CHATFILES_URL } from '@/api'
@@ -50,7 +49,6 @@ export function FileTable({
     null,
   )
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
-  const [drawerOpened, setDrawerOpened] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState({
     filename: true,
     is_preprocessed: true,
@@ -63,10 +61,6 @@ export function FileTable({
     key: keyof ChatFile | null
     direction: 'asc' | 'desc'
   }>({ key: null, direction: 'asc' })
-
-  useEffect(() => {
-    setDrawerOpened(selectedFiles.size > 0)
-  }, [selectedFiles])
 
   const handleEditFilenameClick = (fileID: number, value: string) => {
     setEditingFilenameID(fileID)
@@ -143,31 +137,6 @@ export function FileTable({
       }
       return newSelection
     })
-  }
-
-  const handleBulkPreprocess = () => {
-    setSelectedFiles(new Set())
-  }
-
-  const handleDelete = async (fileId: number) => {
-    const response = await deleteData(`chat/files/${fileId}/`)
-    if (!response.ok)
-      throw new Error(
-        `Failed to edit file with ID ${fileId}, Status ${response.status}`,
-      )
-    fetchFiles()
-  }
-
-  const handleBulkDelete = () => {
-    setSelectedFiles(new Set())
-  }
-
-  const handleSort = (key: keyof ChatFile) => {
-    setSortConfig((prev) => ({
-      key,
-      direction:
-        prev.key === key ? (prev.direction === 'asc' ? 'desc' : 'asc') : 'asc',
-    }))
   }
 
   const toggleAll = () => {
@@ -392,37 +361,6 @@ export function FileTable({
           <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
         </Table>
       </Table.ScrollContainer>
-      <Drawer
-        trapFocus={false}
-        lockScroll={false}
-        zIndex={1}
-        closeOnClickOutside={false}
-        opened={drawerOpened}
-        size="10rem"
-        withinPortal={false}
-        onClose={() => setDrawerOpened(false)}
-        classNames={{ root: styles.drawer, overlay: styles.drawer_root }}
-        position="bottom"
-        title="Bulk Actions"
-      >
-        <Text>Total Files: {selectedFiles.size}</Text>
-        <Group>
-          <Button
-            onClick={handleBulkPreprocess}
-            color="green"
-            disabled={selectedFiles.size === 0}
-          >
-            Bulk Preprocess
-          </Button>
-          <Button
-            onClick={handleBulkDelete}
-            color="red"
-            disabled={selectedFiles.size === 0}
-          >
-            Bulk Delete
-          </Button>
-        </Group>
-      </Drawer>
     </Paper>
   )
 }

@@ -1,11 +1,9 @@
 .mainStack {
-  margin: var(--mantine-spacing-md);
-  max-height: 90vh;
+  width: 100%;
 }
 
 .fileUploadPaper {
-  height: 100%;
-  width: 100%;
+
 }
 
 .topGroup {
@@ -13,11 +11,6 @@
 }
 
 .top_paper {
-  margin: var(--mantine-spacing-md);
-}
-
-.topGroup,
-.botGroup {
   margin: var(--mantine-spacing-md);
 }
 
@@ -29,7 +22,7 @@
 .paper {
   background-color: var(--mantine-color-body);
   border-radius: 0;
-  width: 100%;
+
 }
 
 @media (min-width: 769px) {

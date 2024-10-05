@@ -1,23 +1,35 @@
-import { Table, Button, TextInput, Group, Tooltip, Box } from '@mantine/core'
+import { Table, Button, TextInput, Group, Tooltip, Box, Paper, Text } from '@mantine/core'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
 import styles from './EmoteSetTable.module.css'
 import Link from 'next/link'
-import { EmoteSet } from '@/api'
+import { deleteData, EmoteSet, patchData } from '@/api'
+
 
 interface EmoteSetTableProps {
   emoteSets: EmoteSet[]
-  onDelete: (fileId: number, fileName: string) => void
-  onEdit: (fileId: number, newFileName: string) => void
+  fetchEmoteSets: () => Promise<void>;
 }
 
-export function EmoteSetTable({
-  emoteSets,
-  onDelete,
-  onEdit,
-}: EmoteSetTableProps) {
+export function EmoteSetTable({emoteSets, fetchEmoteSets}: EmoteSetTableProps) {
+
   const [editingRecordID, setEditingRecordID] = useState<number | null>(null)
   const [newName, setNewName] = useState<string>('')
+
+  const handleEdit = async (fileId: number, newName: string) => {
+    const formData = new FormData()
+    formData.append('name', newName)
+
+    await patchData(`chat/emotesets/${fileId}/`, formData)
+    await fetchEmoteSets()
+  }
+
+
+  const handleDelete = async (fileId: number) => {
+    await deleteData(`chat/emotesets/${fileId}/`)
+    await fetchEmoteSets()
+  }
+
 
   const handleEditClick = (fileId: number, filename: string) => {
     setEditingRecordID(fileId)
@@ -29,7 +41,7 @@ export function EmoteSetTable({
       newName &&
       newName !== emoteSets.find((file) => file.id === recordID)?.name
     ) {
-      onEdit(recordID, newName)
+      handleEdit(recordID, newName)
     }
     setEditingRecordID(null)
     setNewName('')
@@ -89,7 +101,7 @@ export function EmoteSetTable({
           <Tooltip label="Delete File">
             <Button
               color="red"
-              onClick={() => onDelete(emoteSet.id, emoteSet.name)}
+              onClick={() => handleDelete(emoteSet.id)}
               variant="subtle"
               size="xs"
             >
@@ -102,17 +114,24 @@ export function EmoteSetTable({
   ))
 
   return (
-    <Table.ScrollContainer minWidth={400}>
-      <Table className={styles.table}>
-        <Table.Thead className={styles.thead}>
-          <Table.Tr className={styles.tr}>
-            <Table.Th className={styles.fileHeader}>Name</Table.Th>
-            <Table.Th className={styles.fileHeader}>ID</Table.Th>
-            <Table.Th className={styles.fileHeader}>Actions</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
-      </Table>
-    </Table.ScrollContainer>
+    <Paper withBorder shadow="md" className={styles.mainPaper}>
+      <Group>
+        <Text size="lg" style={{ margin: '1rem' }}>
+          Emote Sets ({emoteSets.length})
+        </Text>
+      </Group>
+      <Table.ScrollContainer minWidth={400}>
+        <Table className={styles.table}>
+          <Table.Thead className={styles.thead}>
+            <Table.Tr className={styles.tr}>
+              <Table.Th className={styles.fileHeader}>Name</Table.Th>
+              <Table.Th className={styles.fileHeader}>ID</Table.Th>
+              <Table.Th className={styles.fileHeader}>Actions</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody className={styles.tbody}>{rows}</Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
+    </Paper>
   )
 }

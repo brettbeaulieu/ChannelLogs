@@ -24,7 +24,7 @@ export function ChannelDateGroup({ channel, setChannel, channelList, dateRange, 
         }
     }
     return (
-        <Paper withBorder className={styles.paper}>
+        <Paper withBorder className={styles.paper} shadow="md">
 
                 <Select
                     classNames={{input: styles.select, dropdown: styles.select}}

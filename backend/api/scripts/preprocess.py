@@ -237,7 +237,7 @@ def preprocess_log(
 
     # Validate messages by length for sentiment analysis
     def msg_validator(x):
-        is_valid_message(x, min_words, use_emotes)
+        return is_valid_message(x, min_words, use_emotes)
 
     # Do sentiment analysis, if desired
     if use_sentiment:
@@ -249,6 +249,7 @@ def preprocess_log(
             batch_size=16,
         )
 
+        # Filter emotes, if desired
         if filter_emotes:
             messages = [
                 filter_emotes_from_message(msg)
@@ -262,12 +263,13 @@ def preprocess_log(
             messages, ["positive opinion", "negative opinion", "neutral opinion"]
         )
 
+
+        # Map labels to numeric scores
         translate = {
             "negative opinion": -1,
             "neutral opinion": 0,
             "positive opinion": 1,
         }
-
         sentiment_score = [translate[result["labels"][0]] for result in emotion_results]
 
         # Update the original list with classification results

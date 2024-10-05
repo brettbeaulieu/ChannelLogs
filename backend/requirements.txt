@@ -2,8 +2,9 @@ celery
 datasets
 django
 django-filter
-djangorestframework
 django-cors-headers
+djangorestframework
+djangorestframework-simplejwt
 gunicorn
 numpy==1.25.2
 psycopg2-binary

@@ -47,7 +47,7 @@ export function StatsGrid({ channel, dateRange }: StatsGridProps) {
     )
 
     return (
-      <Paper withBorder className={styles.paper}>
+      <Paper withBorder className={styles.paper} shadow='md'>
         <Stack className={styles.stack}>
           <Group justify="space-between">
             <Text size="sm" className={styles.title}>

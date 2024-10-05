@@ -132,7 +132,7 @@ export function RustlogImport({
         <Group align={'flex-end'} className={styles.paramsGroup}>
           <TextInput
             classNames={{ label: styles.selectLabel }}
-            label={'Repository'}
+            label={'Repository URL'}
             value={repoName}
             onChange={handleRepoNameChange} // Use the handler that resets validation
             onKeyDown={handleKeyDown}
@@ -150,7 +150,7 @@ export function RustlogImport({
           />
           <Select
             classNames={{ label: styles.selectLabel }}
-            label="Channel Name"
+            label="Channel"
             placeholder="Select channel"
             value={channelName}
             onChange={setChannelName}

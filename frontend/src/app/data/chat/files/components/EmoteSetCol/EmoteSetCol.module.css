@@ -1,0 +1,5 @@
+.subStack {
+    margin: var(--mantine-spacing-md);
+    max-height: 90vh;
+    column-gap: 0ch;
+}

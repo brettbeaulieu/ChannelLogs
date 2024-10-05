@@ -518,4 +518,4 @@ class MessageViewSet(viewsets.ModelViewSet):
             The aggregated data is normalized such that the maximum value is 1 and the
             minimum value is -1.
         """
-        return aggregate_data(request, Avg("sentiment_score"), "value")
+        return aggregate_data(request, Avg("sentiment_score"), "value", True)

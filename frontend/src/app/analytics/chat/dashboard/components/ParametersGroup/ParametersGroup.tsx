@@ -47,7 +47,7 @@ export function ParametersGroup({
 
   const buildOption = (text: string, element: ReactElement): ReactElement => {
     return (
-      <Paper withBorder className={styles.innerPaper}>
+      <Paper withBorder className={styles.innerPaper} shadow='md'>
         <Stack>
           <Text ta="center" className={styles.textLabel}>
             {text}

@@ -1,6 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
 from .views import (
+    RegisterView, 
+    LoginView, 
+    ProtectedView,
     ChatFileViewSet,
     MessageViewSet,
     EmoteSetViewSet,
@@ -19,4 +23,7 @@ router.register(r"channels", ChannelViewSet)
 urlpatterns = [
     path("", include(router.urls)),
     path("task_status/", TaskStatusView.as_view(), name="task_status"),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('protected/', ProtectedView.as_view(), name='protected'),
 ]

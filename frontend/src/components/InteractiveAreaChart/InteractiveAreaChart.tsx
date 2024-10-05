@@ -176,7 +176,7 @@ export function InteractiveAreaChart({
 
   return (
     <div className={styles.root}>
-      <Paper withBorder className={styles.mainPaper}>
+      <Paper withBorder className={styles.mainPaper} shadow='md'>
         {
           <Group className={styles.mainWidget}>
             <Skeleton visible={isLoadingGraph}>

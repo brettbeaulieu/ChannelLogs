@@ -67,6 +67,7 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
       setIsLoading(true)
       if (!dateRange[0] || !dateRange[1] || !channel) {
         setRows([])
+        setIsLoading(false)
         return
       }
       const startDate = toIsoDateString(dateRange[0])
@@ -87,7 +88,7 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
 
   return (
     <Skeleton visible={isLoading} className={styles.skeleton}>
-      <Paper withBorder className={styles.rootPaper}>
+      <Paper withBorder className={styles.rootPaper} shadow='md'>
         <Table.ScrollContainer
           minWidth={200}
           type="scrollarea"
@@ -102,7 +103,15 @@ export function EmoteList({ channel, dateRange }: EmoteListProps) {
                 <Table.Th>Count</Table.Th>
               </Table.Tr>
             </Table.Thead>
-            <Table.Tbody>{rows}</Table.Tbody>
+            <Table.Tbody>            {rows.length > 0 ? (
+              rows
+            ) : (
+              <Table.Tr>
+                <Table.Td colSpan={4} ta={'center'}>
+                  <Text p={"md"}>No emotes found.</Text>
+                </Table.Td>
+              </Table.Tr>
+            )}</Table.Tbody>
           </Table>
         </Table.ScrollContainer>
       </Paper>

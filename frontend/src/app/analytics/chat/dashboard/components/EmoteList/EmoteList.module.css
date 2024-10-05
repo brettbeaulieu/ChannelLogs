@@ -1,10 +1,12 @@
 .rootPaper {
   border-radius: 0px;
-  height: 56%;
+  height: 100%;
+  z-index: 2;
 }
 
 .skeleton {
   height: 100%;
+  z-index: 2;
 }
 
 .table,

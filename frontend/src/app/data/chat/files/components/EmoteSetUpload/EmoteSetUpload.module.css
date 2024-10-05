@@ -1,14 +1,13 @@
 .inner_paper {
   display: flex;
+  flex: 1;
   margin: var(--mantine-spacing-md);
   padding: var(--mantine-spacing-md);
-  width:20%;
-  height: 100%;
 }
 .inner_paper_stack {
   width: 100%;
-  height: 100%;
 }
+
 .centered_header {
   font-weight: 300;
   font-size: large;
